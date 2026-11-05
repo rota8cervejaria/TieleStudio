@@ -1,0 +1,2613 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Agenda Tiele Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: painel de três zonas no desktop (menu, linha do tempo, lista do dia); no celular, uma coluna com barra inferior.
+   A rota #agendar vira uma página de reserva própria para clientes. */
+:root{
+  --bg:#f3f4f7; --panel:#ffffff; --sunk:#eceef3; --ink:#0d1017; --ink2:#414a5c; --muted:#8891a2; --line:#e3e6ee;
+  --accent:#e0307a; --accent-ink:#ffffff; --accent-soft:#fce6f0;
+  --info:#2456d3; --info-soft:#e4ecfc;
+  --ok:#0f8358; --ok-soft:#dcf4e9;
+  --warn:#b06a05; --warn-soft:#fff0d4;
+  --bad:#c12a2a; --bad-soft:#fde2e2;
+  --shadow:0 1px 2px rgb(13 16 23 / .05), 0 8px 24px -12px rgb(13 16 23 / .12);
+  --display:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0d12; --panel:#13161e; --sunk:#1a1e28; --ink:#f2f4f9; --ink2:#b4bccd; --muted:#7a8397; --line:#232836;
+    --accent:#ff5c9a; --accent-ink:#17060f; --accent-soft:#3a1426;
+    --info:#7ea6ff; --info-soft:#18284a; --ok:#4fd39b; --ok-soft:#10352a; --warn:#ffb547; --warn-soft:#3a2a0e;
+    --bad:#ff7a7a; --bad-soft:#3d1717; --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 32px -14px rgb(0 0 0 / .6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0d12; --panel:#13161e; --sunk:#1a1e28; --ink:#f2f4f9; --ink2:#b4bccd; --muted:#7a8397; --line:#232836;
+  --accent:#ff5c9a; --accent-ink:#17060f; --accent-soft:#3a1426;
+  --info:#7ea6ff; --info-soft:#18284a; --ok:#4fd39b; --ok-soft:#10352a; --warn:#ffb547; --warn-soft:#3a2a0e;
+  --bad:#ff7a7a; --bad-soft:#3d1717; --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 32px -14px rgb(0 0 0 / .6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:var(--bg); color:var(--ink); font:14px/1.45 var(--body); -webkit-font-smoothing:antialiased;
+  padding-block:0 96px;
+  padding-left:max(0px, env(safe-area-inset-left, 0px));
+  padding-right:max(0px, env(safe-area-inset-right, 0px));
+}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:26px;font-weight:700;line-height:1.15}
+h2{font-size:18px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.kicker{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.muted{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+
+/* Botões e controles */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border-radius:10px;
+  border:1px solid var(--line);background:var(--panel);font-weight:600;font-size:13px;white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.accent:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.full{width:100%;height:42px;font-size:14px}
+.btn.big{width:100%;height:46px;font-size:15px}
+.btn[hidden]{display:none}
+.ic{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;font-size:16px;color:var(--ink2)}
+.ic:hover{color:var(--ink);border-color:var(--muted)}
+.linkish{background:none;border:0;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+input[type=text],input[type=search],input[type=date],input[type=time],input[type=number],input[type=tel],select,textarea{
+  width:100%;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);outline:none}
+textarea{padding:10px 12px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--ink2);min-width:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.erro{color:var(--bad);font-size:13px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.agendado{background:var(--info-soft);color:var(--info)}
+.pill.confirmado{background:var(--ok-soft);color:var(--ok)}
+.pill.concluido{background:var(--sunk);color:var(--ink2)}
+.pill.cancelado{background:var(--bad-soft);color:var(--bad)}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+
+/* Shell */
+.app{display:grid;grid-template-columns:244px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;padding:22px 16px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 17px var(--display)}
+.brand strong{display:block;font:700 15px var(--display)}
+.brand small{color:var(--muted);font-size:12px}
+.snav{display:flex;flex-direction:column;gap:4px}
+.snav button{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:10px;border:0;background:transparent;color:var(--ink2);font-weight:600;text-align:left}
+.snav button:hover{background:var(--sunk);color:var(--ink)}
+.snav button.on{background:var(--sunk);color:var(--ink)}
+.snav button::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--line)}
+.snav button.on::before{background:var(--accent)}
+.side-foot{margin-top:auto;padding:14px;border-radius:12px;background:var(--sunk);font-size:12px;color:var(--ink2)}
+.side-foot strong{display:block;color:var(--ink);margin-bottom:4px;font-size:13px}
+.main{min-width:0;padding:26px clamp(16px,3vw,36px) 40px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.top-r{display:flex;gap:8px;align-items:center}
+.search{width:240px}
+.mob-only{display:none}
+.view[hidden]{display:none}
+
+/* Dia */
+.daynav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.dn-l{display:flex;align-items:center;gap:10px}
+.dn-l h2{min-width:200px;text-align:center;text-transform:capitalize}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.sday{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink2)}
+.sday span{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sday strong{font:700 18px var(--display);color:var(--ink)}
+.sday i{width:5px;height:5px;border-radius:50%;background:transparent;margin-top:2px}
+.sday i.has{background:var(--accent)}
+.sday.on{background:var(--ink);border-color:var(--ink)}
+.sday.on span,.sday.on strong{color:var(--bg)}
+.sday.on i.has{background:var(--accent)}
+.sday.today:not(.on){border-color:var(--accent)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi .l{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:700 24px var(--display);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .s{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .bar{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.kpi .bar b{display:block;height:100%;background:var(--accent);border-radius:99px}
+
+.dayg{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.tlcard{padding:6px 0 0;overflow:hidden}
+.tl-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.tl-head .legend{display:flex;gap:12px;font-size:12px;color:var(--muted)}
+.tl-head .legend span{display:inline-flex;align-items:center;gap:6px}
+.tl-head .legend i{width:8px;height:8px;border-radius:3px}
+.tl-scroll{max-height:calc(100vh - 290px);min-height:420px;overflow:auto;position:relative}
+.tl-inner{display:grid;grid-template-columns:56px minmax(0,1fr);position:relative}
+.tl-hours{position:relative}
+.tl-hours span{position:absolute;right:10px;transform:translateY(-7px);font:500 11px var(--mono);color:var(--muted)}
+.tl-body{position:relative;margin-right:12px;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% var(--hpx,72px);border-left:1px solid var(--line);cursor:cell}
+.blk{position:absolute;left:8px;right:8px;text-align:left;border-radius:10px;padding:7px 10px;border:1px solid transparent;background:var(--info-soft);color:var(--ink);
+  display:flex;flex-direction:column;gap:2px;overflow:hidden;box-shadow:inset 3px 0 0 var(--info);cursor:pointer;transition:filter .15s}
+.blk:hover{filter:brightness(.97)}
+.blk strong{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk-t{font:500 11px var(--mono);color:var(--ink2)}
+.blk-s{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk.st-confirmado{background:var(--ok-soft);box-shadow:inset 3px 0 0 var(--ok)}
+.blk.st-concluido{background:var(--sunk);box-shadow:inset 3px 0 0 var(--muted)}
+.blk.st-cancelado{background:transparent;border:1px dashed var(--bad);box-shadow:none;opacity:.7}
+.blk.st-cancelado strong{text-decoration:line-through;color:var(--bad)}
+.blk.dim{opacity:.25}
+.nowline{position:absolute;left:-6px;right:0;height:2px;background:var(--accent);z-index:2;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:0;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tl-empty{position:absolute;inset:auto 0 0 0;padding:16px;text-align:center;color:var(--muted);font-size:13px;pointer-events:none}
+
+.listcard{padding:16px;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto}
+.listcard>h3{margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.lc{display:flex;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);margin-bottom:8px;cursor:pointer;text-align:left;width:100%}
+.lc:hover{border-color:var(--muted)}
+.lc .t{font:600 13px var(--mono);min-width:44px;color:var(--ink2);padding-top:1px}
+.lc .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lc .b strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc .b span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc .acts{display:flex;gap:6px;margin-top:6px}
+.lc .acts button{height:26px;padding:0 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:12px;font-weight:600}
+.lc .acts button:hover{border-color:var(--muted)}
+.lc .acts .ok{color:var(--ok)}
+.lc .acts .go{color:var(--ink2)}
+.lc.cancel{opacity:.6}
+
+/* Semana */
+.wtool{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px}
+.wgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
+.wcol{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;min-height:240px;display:flex;flex-direction:column;gap:6px}
+.wcol.today{border-color:var(--accent)}
+.whead{display:flex;justify-content:space-between;align-items:baseline;padding:6px 6px 8px;border:0;background:none;border-bottom:1px solid var(--line);margin-bottom:4px;color:var(--ink2);text-align:left}
+.whead span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.whead strong{font:700 18px var(--display);color:var(--ink)}
+.wcard{display:flex;flex-direction:column;gap:1px;text-align:left;padding:7px 8px;border-radius:9px;border:0;background:var(--info-soft);box-shadow:inset 3px 0 0 var(--info)}
+.wcard b{font:600 11px var(--mono);color:var(--ink2)}
+.wcard span{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wcard.st-confirmado{background:var(--ok-soft);box-shadow:inset 3px 0 0 var(--ok)}
+.wcard.st-concluido{background:var(--sunk);box-shadow:inset 3px 0 0 var(--muted)}
+.wcard.st-cancelado{opacity:.5;text-decoration:line-through}
+.wempty{font-size:12px;color:var(--muted);padding:8px 6px}
+
+/* Serviços e ajustes */
+.grid-svc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px}
+.svc{padding:16px;display:flex;flex-direction:column;gap:10px}
+.svc .n{font:700 16px var(--display)}
+.svc .meta{display:flex;gap:8px;align-items:center;color:var(--ink2);font-size:13px}
+.svc .price{font:700 22px var(--display);letter-spacing:-.02em}
+.svc .foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+.addsvc{padding:16px;display:grid;grid-template-columns:minmax(0,2fr) 110px 120px auto;gap:12px;align-items:end}
+.setgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.panel-box{padding:20px;display:flex;flex-direction:column;gap:14px}
+.sec-t{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.sec-t p{color:var(--muted);font-size:13px}
+.copybox{display:flex;gap:8px}
+.copybox input{flex:1;font-family:var(--mono);font-size:12px}
+
+/* Bottom nav (mobile) */
+.bnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:1px solid var(--line);
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));gap:4px}
+.bnav button{flex:1;height:44px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px}
+.bnav button.on{color:var(--ink);background:var(--sunk)}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgb(5 7 12 / .42);z-index:30;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+.scrim[hidden]{display:none}
+.drawer{width:min(460px,100%);height:100%;background:var(--panel);display:flex;flex-direction:column;box-shadow:var(--shadow);
+  animation:slide .22s ease-out}
+@keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+.dh h2{text-transform:none}
+.dbody{padding:20px 22px;display:flex;flex-direction:column;gap:14px;overflow:auto;flex:1}
+.df{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid var(--line);
+  padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.df .grp{display:flex;gap:8px}
+
+/* Toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:40;background:var(--ink);color:var(--bg);
+  border-radius:12px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);font-weight:600;font-size:13px;max-width:calc(100% - 32px)}
+.toast[hidden]{display:none}
+.toast button{border:0;background:none;color:var(--accent);font-weight:700;padding:4px 6px;font-size:13px}
+
+/* Página de reserva (clientes) */
+#booking{display:none;max-width:560px;margin:0 auto;padding:28px 18px 48px}
+.bk-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.bk-hero{padding:22px;border-radius:18px;background:var(--ink);color:var(--bg);margin-bottom:18px}
+.bk-hero h1{font-size:28px;color:var(--bg)}
+.bk-hero p{color:color-mix(in srgb,var(--bg) 70%,transparent);margin-top:6px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px}
+.steps i{height:4px;border-radius:99px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.cb-sec{display:flex;flex-direction:column;gap:12px}
+.cb-sec[hidden]{display:none}
+.cb-sec h2{margin-top:4px}
+.cb-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.scard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;text-align:left;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow)}
+.scard:hover{border-color:var(--muted)}
+.scard.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sc-n{font:700 15px var(--display)}
+.sc-m{grid-column:1;font-size:12px;color:var(--muted)}
+.sc-p{grid-row:1/3;grid-column:2;align-self:center;font:700 16px var(--display)}
+.cb-svcs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cb-svcs>.scard{grid-template-columns:minmax(0,1fr);gap:6px;padding:14px;text-align:left}
+.cb-svcs .sc-n{min-width:0;overflow-wrap:anywhere;line-height:1.25}
+.cb-svcs .sc-m{grid-column:1}
+.cb-svcs .sc-p{grid-row:auto;grid-column:1;align-self:start;font-size:15px}
+.cb-svcs>.dim{grid-column:1/-1}
+@media (max-width:340px){.cb-svcs{grid-template-columns:minmax(0,1fr)}}
+.dchips{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.dchip{display:flex;flex-direction:column;align-items:center;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.dchip span{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+.dchip strong{font:700 17px var(--display)}
+.dchip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dchip.on span{color:var(--accent-ink)}
+.slotg{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.slot{height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font:600 14px var(--mono)}
+.slot:hover:not(:disabled){border-color:var(--accent)}
+.slot.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.slot:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+.sumcard{padding:14px 16px;border-radius:12px;background:var(--sunk);font-size:13px;color:var(--ink2)}
+.sumcard strong{color:var(--ink)}
+.dim{color:var(--muted)}
+.done{text-align:center;padding:12px 0 0;display:flex;flex-direction:column;gap:14px;align-items:center}
+.done .check{width:56px;height:56px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:700}
+
+/* Responsivo */
+@media (max-width:1100px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dayg{grid-template-columns:minmax(0,1fr)}
+  .listcard{position:static;max-height:none}
+  .tl-scroll{max-height:none}
+  .addsvc{grid-template-columns:1fr 1fr}
+  .setgrid{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{display:none}
+  .main{padding:18px 14px 110px}
+  .bnav{display:flex}
+  .mob-only{display:inline-flex}
+  .search{width:100%}
+  .top-r{width:100%}
+  .top-r .mob-only{width:40px;padding:0}
+  .wgrid{grid-template-columns:1fr;gap:8px}
+  .wcol{min-height:0}
+  .strip{gap:6px}
+  .dn-l h2{min-width:0;font-size:16px}
+  .dn-l{flex:1;justify-content:center}
+  .daynav{gap:6px}
+  .drawer{width:100%;height:auto;max-height:92vh;margin-top:auto;border-radius:18px 18px 0 0}
+  .scrim{align-items:flex-end}
+  .tl-head .legend{display:none}
+  .tl-scroll{min-height:0}
+  .wtool{flex-wrap:wrap}
+}
+@media (max-width:520px){
+  .kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi{padding:12px}
+  .kpi .v{font-size:20px}
+  .row2{grid-template-columns:1fr}
+  .addsvc{grid-template-columns:1fr}
+}
+body.cliente .app,body.cliente .bnav{display:none}
+body.cliente #booking{display:block}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Acréscimos da versão online ---- */
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.pill.bloqueado{background:var(--sunk);color:var(--ink2)}
+.blk.st-bloqueado{background:repeating-linear-gradient(135deg,var(--sunk) 0 8px,var(--panel) 8px 16px);box-shadow:inset 3px 0 0 var(--muted)}
+.wcard.st-bloqueado{background:var(--sunk);box-shadow:inset 3px 0 0 var(--muted)}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);vertical-align:middle;margin-left:6px}
+.lc .b strong .tag{margin-left:6px}
+#login{display:none;min-height:100vh;place-items:center;padding:24px 16px}
+body.entrando #login{display:grid}
+body.entrando .app,body.entrando .bnav{display:none}
+.login-card{width:min(380px,100%);padding:26px;display:flex;flex-direction:column;gap:14px}
+.login-card .mark{width:44px;height:44px;font-size:20px}
+.dias{display:flex;flex-wrap:wrap;gap:8px}
+.dias label{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-weight:600;font-size:13px;cursor:pointer;color:var(--ink2)}
+.dias input{width:auto;height:auto;accent-color:var(--accent)}
+.dias label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.dchips{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
+.dchip small{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.dchip.on small{color:var(--accent-ink)}
+.hint{font-size:12px;color:var(--muted)}
+.infoline{font-size:12px;color:var(--muted);padding:8px 10px;background:var(--sunk);border-radius:10px}
+.linkrow{display:flex;gap:8px;align-items:center}
+.linkrow input{flex:1;font-family:var(--mono);font-size:12px}
+.manage{padding:18px;display:flex;flex-direction:column;gap:12px}
+.status-big{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ok-note{color:var(--ok);font-weight:600}
+.load{padding:28px;text-align:center;color:var(--muted)}
+.demo-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--ink);box-shadow:var(--shadow)}
+.demo-bar button{border:0;border-radius:999px;height:32px;padding:0 14px;background:transparent;color:var(--bg);font-weight:600;font-size:12px}
+.demo-bar button.on{background:var(--accent);color:var(--accent-ink)}
+@media (min-width:821px){.demo-bar{bottom:20px}}
+body.cliente .demo-bar{bottom:20px}
+
+a.btn{color:var(--ink)}
+a.btn.accent{color:var(--accent-ink)}
+a.btn.danger{color:var(--bad)}
+.lc .acts a.go{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:12px;font-weight:600;color:var(--ink2);text-decoration:none}
+.lc .acts a.go:hover{border-color:var(--muted)}
+.tl-inner{padding-top:10px}
+.demo-bar{position:static;transform:none;margin:10px auto 0;width:max-content;max-width:calc(100% - 24px)}
+input[type=password]{width:100%;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);outline:none}
+input[type=password]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lc .acts{flex-wrap:wrap}
+body.cliente .demo-bar{position:static;transform:none;margin:10px auto 0}
+
+.bk-meta{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:14px;font-size:13px}
+.bk-meta a{color:var(--bg);text-decoration:underline;text-underline-offset:3px;opacity:.9}
+.bk-meta span{opacity:.5}
+.lemb{padding:14px 16px;margin-bottom:16px}
+.lemb-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.lemb-h .muted{font-size:12px}
+.lemb-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.lemb-i{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;min-width:0}
+.lemb-i:hover{border-color:var(--accent)}
+.lemb-i strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lemb-i .muted{grid-column:2;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lemb-i em{grid-row:1/3;grid-column:3;font-style:normal;font-weight:700;font-size:12px;color:var(--accent)}
+.cl-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.cl-list{display:flex;flex-direction:column;gap:8px}
+.cl-i{padding:12px 16px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto;gap:12px;align-items:center}
+.cl-n{display:flex;flex-direction:column;min-width:0}
+.cl-n strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-n .muted{font-size:12px}
+.cl-m{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink2)}
+.cl-a{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:820px){.cl-i{grid-template-columns:1fr}.cl-a{justify-content:flex-start}.cl-top{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.cl-top{grid-template-columns:1fr}}
+.bnav button{font-size:11px}
+input[type=url],input[type=email]{width:100%;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);outline:none}
+input[type=url]:focus,input[type=email]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* ---- CRM ---- */
+.nbadge{margin-left:auto;font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;display:inline-grid;place-items:center}
+.snav button{position:relative}
+.bnav{overflow-x:auto;gap:2px;scrollbar-width:none}
+.bnav::-webkit-scrollbar{display:none}
+.bnav button{flex:0 0 auto;min-width:68px;padding:0 10px;position:relative}
+.bnav button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.pill.lead{background:var(--sunk);color:var(--ink2)}
+.pill.agendada{background:var(--info-soft);color:var(--info)}
+.pill.cliente{background:var(--ok-soft);color:var(--ok)}
+.pill.recorrente{background:var(--accent-soft);color:var(--accent)}
+.pill.inativa{background:var(--warn-soft);color:var(--warn)}
+.pill.brinde{background:var(--accent-soft);color:var(--accent)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:8px;vertical-align:middle}
+.dot.accent{background:var(--accent)}.dot.info{background:var(--info)}.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}
+
+.meta-card{padding:16px 18px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.meta-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.meta-h strong{font:700 22px var(--display)}
+.meta-p{font:700 22px var(--display);color:var(--accent)}
+.meta-bar{height:10px;border-radius:99px;background:var(--sunk);display:flex;overflow:hidden}
+.meta-bar b{background:var(--accent)}
+.meta-bar i{background:var(--accent-soft)}
+.pn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.pn-grid .panel-box{min-width:0}
+.bars{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end}
+.bar-c{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.bcol{height:120px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.bcol b{display:block;width:70%;max-width:44px;border-radius:6px 6px 2px 2px;background:var(--accent-soft)}
+.bar-c.cur .bcol b{background:var(--accent)}
+.bv{font-size:11px;color:var(--ink2);font-weight:600;white-space:nowrap}
+.bl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.hb{display:grid;grid-template-columns:minmax(80px,1.1fr) 2fr auto;gap:10px;align-items:center;margin-bottom:10px;font-size:13px}
+.hl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ht{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.ht b{display:block;height:100%;background:var(--accent);border-radius:99px}
+.hv{font-size:12px;color:var(--ink2);white-space:nowrap}
+.top-i,.acao-i{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);text-align:left}
+.top-i:last-child,.acao-i:last-child{border-bottom:0}
+.top-t{display:flex;flex-direction:column;flex:1;min-width:0}
+.top-t .muted{font-size:12px}
+.top-n{width:22px;height:22px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink2)}
+.acao-i span:nth-child(2){flex:1}
+.acao-i b{font:700 16px var(--display)}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:32px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);font-weight:600;font-size:13px}
+.chip b{margin-left:4px;color:var(--muted);font-size:12px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.on b{color:var(--bg);opacity:.7}
+.cl-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.cl-bar-r{display:flex;gap:8px;align-items:center}
+.cl-bar-r select{height:38px;width:auto}
+.cl-i{cursor:pointer}
+.cl-i:hover{border-color:var(--muted)}
+.tgs{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.tg{font-size:11px;font-weight:600;padding:1px 7px;border-radius:6px;background:var(--sunk);color:var(--ink2)}
+
+.funil{display:grid;grid-template-columns:repeat(5,minmax(165px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.fcol{background:var(--sunk);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0;border-top:3px solid var(--muted)}
+.fcol.f-agendada{border-top-color:var(--info)}.fcol.f-cliente{border-top-color:var(--ok)}.fcol.f-recorrente{border-top-color:var(--accent)}.fcol.f-inativa{border-top-color:var(--warn)}
+.fh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.fh div{display:flex;flex-direction:column}
+.fh .muted{font-size:11px}
+.fh b{font:700 20px var(--display)}
+.fsum{font-size:12px;color:var(--ink2)}
+.fcards{display:flex;flex-direction:column;gap:6px}
+.fcard{text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:flex;flex-direction:column;gap:2px}
+.fcard:hover{border-color:var(--accent)}
+.fcard .muted{font-size:12px}
+.fcard .fv{font-size:12px;font-weight:700;color:var(--ink2)}
+
+.camps{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start}
+.camp{padding:16px;display:flex;flex-direction:column;gap:8px}
+.camp-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.camp-h .muted{font-size:12px;margin-top:2px}
+.camp-n{font:700 22px var(--display)}
+.camp-i{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.camp-c{display:flex;flex-direction:column;text-align:left;border:0;background:transparent;color:var(--ink);padding:0;min-width:0;flex:1}
+.camp-c .muted{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.drawer.wide{width:min(580px,100%)}
+.fch{display:flex;flex-direction:column;height:100%;min-height:0}
+.fk{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.fk div{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:12px;background:var(--sunk);min-width:0}
+.fk .l{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fk b{font:700 16px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fid{padding:12px;border-radius:12px;border:1px dashed var(--line);display:flex;flex-direction:column;gap:8px}
+.stamps{display:flex;gap:6px;flex-wrap:wrap}
+.stamps i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line)}
+.stamps i.on{background:var(--accent);border-color:var(--accent)}
+.fid-r{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.fch-h{font:700 14px var(--display);margin-bottom:8px}
+.hist{display:flex;flex-direction:column}
+.hist-i{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;text-align:left;padding:8px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font-size:13px}
+.int-add{display:grid;grid-template-columns:auto 1fr auto;gap:6px;margin-bottom:10px}
+.int-add select{width:auto;min-width:0}
+.tl2{display:flex;flex-direction:column;gap:10px}
+.tli{display:grid;grid-template-columns:72px 1fr;gap:10px;font-size:13px}
+.tli-t{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding-top:2px}
+.tli p{margin:0;overflow-wrap:anywhere}
+.tli .muted{font-size:11px}
+.scrim.center{justify-content:center;align-items:center}
+.pay-card{padding:22px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;width:min(380px,92vw)}
+.pay-b{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.orig-links{display:flex;flex-direction:column;gap:8px}
+.lo-n{font-size:12px;width:110px;flex:none;color:var(--ink2)}
+@media (max-width:1100px){.pn-grid{grid-template-columns:1fr}}
+@media (max-width:820px){.fk{grid-template-columns:repeat(2,1fr)}.funil{grid-template-columns:repeat(5,230px)}.hb{grid-template-columns:90px 1fr auto}.lo-n{display:none}}
+
+/* ---- Identidade: TIELE STUDIO em destaque, detalhes dourados ---- */
+:root{--gold-a:#8f6a16;--gold-b:#d8b04c;--gold:#b8892b;--gold-line:#c9a24a;--gold-soft:#fbf3de;--gold-glow:rgb(201 162 74 / .22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--gold-a:#c99a35;--gold-b:#f5dc92;--gold:#e0b655;--gold-line:#a9822f;--gold-soft:#2a2210;--gold-glow:rgb(224 182 85 / .18)}}
+:root[data-theme="dark"]{--gold-a:#c99a35;--gold-b:#f5dc92;--gold:#e0b655;--gold-line:#a9822f;--gold-soft:#2a2210;--gold-glow:rgb(224 182 85 / .18)}
+
+.studio-name{text-transform:uppercase;letter-spacing:.14em}
+.mark{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));color:#2a1d04;box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--gold-line);font-family:var(--display)}
+
+/* menu lateral: marca centralizada */
+.brand{flex-direction:column;text-align:center;gap:10px;padding:6px 0 4px}
+.brand .mark{width:52px;height:52px;border-radius:50%;font-size:24px}
+.brand strong.studio-name{font:800 17px var(--display);letter-spacing:.16em;background:linear-gradient(135deg,var(--gold-a),var(--gold-b) 50%,var(--gold-a));-webkit-background-clip:text;background-clip:text;color:transparent;text-transform:uppercase}
+.brand small{display:block;margin-top:2px;letter-spacing:.12em;text-transform:uppercase;font-size:10px;color:var(--muted)}
+.side .brand{border-bottom:1px solid var(--gold-line);padding-bottom:16px;margin-bottom:4px}
+
+/* tela de acesso */
+.login-card{align-items:center;text-align:center}
+.login-card .mark{width:56px;height:56px;border-radius:50%;font-size:26px}
+.login-card h1.studio-name{font-size:24px;letter-spacing:.16em;background:linear-gradient(135deg,var(--gold-a),var(--gold-b) 50%,var(--gold-a));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* página da cliente */
+.bk-brand{flex-direction:column;align-items:center;text-align:center;gap:10px;margin:6px 0 24px}
+.bk-brand .mark{width:64px;height:64px;border-radius:50%;font-size:30px}
+.bk-title{font:800 clamp(26px,8vw,38px)/1.05 var(--display);letter-spacing:.18em;padding-left:.18em;background:linear-gradient(135deg,var(--gold-a),var(--gold-b) 50%,var(--gold-a));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bk-sub{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-left:.32em}
+.gold-rule{display:block;width:120px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--gold-b),transparent)}
+.bk-hero{border:1px solid var(--gold-line);box-shadow:0 0 0 4px var(--gold-glow),var(--shadow)}
+
+/* cartões e controles com borda dourada */
+.card,.scard,.dchip,.slot,.fcard,.fcol,.lemb-i,.camp-i,.wcol,.sday,.chip,.fid,.fk div,.pay-card,.meta-card,.login-card{border-color:var(--gold-line)}
+.card,.scard{box-shadow:0 1px 2px rgb(60 40 5 / .06),0 10px 28px -14px var(--gold-glow)}
+.fcol{border:1px solid var(--gold-line);border-top-width:3px}
+.fk div{border:1px solid var(--gold-line);background:var(--gold-soft)}
+.sumcard{border:1px solid var(--gold-line);background:var(--gold-soft);color:var(--ink2)}
+.camp-i{border-color:transparent;border-top-color:var(--line)}
+.fid{border-style:dashed}
+.scard:hover,.cl-i:hover,.fcard:hover,.slot:hover:not(:disabled){border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+.scard.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+.drawer{border-left:1px solid var(--gold-line)}
+.top{border-bottom-color:var(--gold-line)}
+.side{border-right:1px solid var(--gold-line)}
+.bnav{border-top-color:var(--gold-line)}
+input,select,textarea{border-color:color-mix(in srgb,var(--gold-line) 55%,var(--line))}
+.kicker{color:var(--gold)}
+.btn.accent{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-line) inset}
+.chip.on{background:var(--ink);border-color:var(--gold)}
+.steps i.on{background:var(--gold)}
+
+[hidden]{display:none!important}
+</style>
+
+<div class="demo-bar" id="demo-bar">
+  <button id="db-cli">Como cliente</button><button id="db-adm">Como Tiele</button><button id="db-rst" title="Apaga os testes">Reiniciar</button>
+</div>
+<script>
+/* DEMO: alternador Cliente/Tiele para pré-visualização. REMOVER EM PRODUÇÃO. */
+(function(){
+  var adm = location.hash === '#tiele';
+  document.getElementById('db-cli').className = adm ? '' : 'on';
+  document.getElementById('db-adm').className = adm ? 'on' : '';
+  document.getElementById('db-cli').onclick = function(){ location.hash = '#cliente'; location.reload(); };
+  document.getElementById('db-adm').onclick = function(){ location.hash = '#tiele'; location.reload(); };
+  document.getElementById('db-rst').onclick = function(){ window.__reiniciar(); };
+})();
+</script>
+<!-- ACESSO (Tiele) -->
+<main id="login">
+  <div class="card login-card">
+    <span class="mark studio-mark">T</span>
+    <div><p class="kicker">Área da profissional</p><h1 class="studio-name">Tiele Studio</h1></div>
+    <p id="login-msg" class="dim">Abrindo sua agenda…</p>
+    <p class="hint" id="login-hint" hidden></p>
+    <button class="btn accent big" id="login-retry" type="button" hidden>Tentar de novo</button>
+  </div>
+</main>
+
+<div class="app" id="app" hidden>
+  <aside class="side">
+    <div class="brand">
+      <span class="mark studio-mark">T</span>
+      <div><strong class="studio-name">Tiele Studio</strong><small>Agenda e relacionamento</small></div>
+    </div>
+    <nav class="snav">
+      <button data-view="painel" class="on">Painel</button>
+      <button data-view="dia">Agenda do dia</button>
+      <button data-view="semana">Semana</button>
+      <button data-view="clientes">Clientes</button>
+      <button data-view="funil">Funil</button>
+      <button data-view="campanhas">Campanhas<i class="nbadge" id="nb-camp" hidden></i></button>
+      <button data-view="servicos">Serviços</button>
+      <button data-view="ajustes">Ajustes</button>
+    </nav>
+    <button class="btn accent full" data-novo>+ Novo agendamento</button>
+    <button class="btn full" data-bloquear>Bloquear horário</button>
+    <div class="side-foot">
+      <strong>Link para clientes</strong>
+      Cole no Instagram e no WhatsApp para a cliente marcar sozinha.
+      <div style="margin-top:8px"><button class="linkish" data-copiar>Copiar link</button></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div>
+        <p class="kicker" id="page-sub"></p>
+        <h1 id="page-title">Painel</h1>
+      </div>
+      <div class="top-r">
+        <input type="search" class="search" id="q" placeholder="Buscar cliente…" aria-label="Buscar cliente">
+        <button class="btn accent mob-only" data-novo aria-label="Novo agendamento">+</button>
+      </div>
+    </header>
+
+    <section class="view" id="view-painel">
+      <div class="kpis" id="pn-kpis"></div>
+      <div class="card meta-card" id="pn-meta"></div>
+      <div class="pn-grid">
+        <div class="card panel-box"><div class="sec-t"><h3>Faturamento</h3><p>Atendimentos concluídos, últimos 6 meses.</p></div><div id="pn-fat"></div></div>
+        <div class="card panel-box"><div class="sec-t"><h3>Serviços mais vendidos</h3><p>Este mês e nos últimos 90 dias.</p></div><div id="pn-svc"></div></div>
+        <div class="card panel-box"><div class="sec-t"><h3>De onde vêm as clientes</h3><p>Instagram, WhatsApp, indicação…</p></div><div id="pn-orig"></div></div>
+        <div class="card panel-box"><div class="sec-t"><h3>Formas de pagamento</h3><p>Neste mês.</p></div><div id="pn-pag"></div></div>
+        <div class="card panel-box"><div class="sec-t"><h3>Melhores clientes</h3><p>Quem mais gastou até hoje.</p></div><div id="pn-top"></div></div>
+        <div class="card panel-box"><div class="sec-t"><h3>Para cuidar agora</h3><p>Ações que trazem cliente de volta.</p></div><div id="pn-acoes"></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-dia" hidden>
+      <div class="daynav">
+        <div class="dn-l">
+          <button class="ic" data-step="-1" aria-label="Dia anterior">‹</button>
+          <h2 id="day-title"></h2>
+          <button class="ic" data-step="1" aria-label="Próximo dia">›</button>
+        </div>
+        <button class="btn ghost" data-today>Hoje</button>
+      </div>
+      <div class="strip" id="strip"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card lemb" id="lembretes" hidden></div>
+      <div class="dayg">
+        <div class="card tlcard">
+          <div class="tl-head">
+            <h3>Linha do tempo</h3>
+            <div class="legend">
+              <span><i style="background:var(--info)"></i>Agendado</span>
+              <span><i style="background:var(--ok)"></i>Confirmado</span>
+              <span><i style="background:var(--muted)"></i>Concluído</span>
+            </div>
+          </div>
+          <div class="tl-scroll" id="tl-scroll"><div class="tl-inner" id="tl"></div></div>
+        </div>
+        <aside class="card listcard">
+          <h3><span>Lista do dia</span><span class="muted num" id="list-count" style="font-size:12px;font-weight:600"></span></h3>
+          <div id="day-list"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-semana" hidden>
+      <div class="wtool">
+        <div class="dn-l">
+          <button class="ic" data-step="-7" aria-label="Semana anterior">‹</button>
+          <h2 id="week-label"></h2>
+          <button class="ic" data-step="7" aria-label="Próxima semana">›</button>
+        </div>
+        <button class="btn ghost" data-today>Esta semana</button>
+      </div>
+      <div class="wgrid" id="week-grid"></div>
+    </section>
+
+    <section class="view" id="view-clientes" hidden>
+      <div class="cl-top" id="cl-resumo"></div>
+      <div class="cl-bar">
+        <div class="chips" id="cl-filtros"></div>
+        <div class="cl-bar-r">
+          <select id="cl-ordem" aria-label="Ordenar">
+            <option value="recente">Mais recentes</option><option value="gasto">Quem mais gastou</option><option value="visitas">Mais visitas</option><option value="nome">Nome (A-Z)</option><option value="sumida">Mais tempo sem vir</option>
+          </select>
+          <button class="btn accent" data-nova-cliente>+ Nova cliente</button>
+        </div>
+      </div>
+      <div class="cl-list" id="cl-list"></div>
+    </section>
+
+    <section class="view" id="view-funil" hidden>
+      <p class="hint" style="margin-bottom:12px">Cada cliente entra na etapa certa sozinha, conforme o histórico. Toque no cartão para abrir a ficha.</p>
+      <div class="funil" id="funil"></div>
+    </section>
+
+    <section class="view" id="view-campanhas" hidden>
+      <p class="hint" style="margin-bottom:12px">Mensagens prontas para o WhatsApp. Ao tocar em <b>Enviar</b>, o contato fica registrado na ficha e a cliente some da lista por alguns dias.</p>
+      <div class="camps" id="camps"></div>
+    </section>
+
+    <section class="view" id="view-servicos" hidden>
+      <form class="card addsvc" id="form-svc">
+        <input type="hidden" name="id">
+        <label class="field">Serviço<input type="text" name="nome" required maxlength="50" placeholder="Ex.: Pedicure completa"></label>
+        <label class="field">Duração (min)<input type="number" name="min" min="10" max="480" step="5" value="60"></label>
+        <label class="field">Preço (R$)<input type="number" name="preco" min="0" step="0.01" value="0"></label>
+        <button class="btn accent" type="submit" id="svc-btn">Adicionar</button>
+      </form>
+      <p class="erro" id="svc-erro" hidden style="margin-top:10px"></p>
+      <div class="grid-svc" id="svc-grid"></div>
+    </section>
+
+    <section class="view" id="view-ajustes" hidden>
+      <div class="setgrid">
+        <form class="card panel-box" id="form-cfg">
+          <div class="sec-t"><h3>Estúdio</h3><p>O nome aparece na página de agendamento.</p></div>
+          <label class="field">Nome<input type="text" name="nomeEstudio" maxlength="40" required></label>
+          <label class="field">WhatsApp da Tiele (com DDD)<input type="tel" name="whatsapp" placeholder="11 91234-5678"></label>
+          <label class="field">Endereço (aparece para a cliente)<input type="text" name="endereco" maxlength="120" placeholder="Rua das Flores, 120 - Centro"></label>
+          <label class="field">Instagram<input type="text" name="instagram" maxlength="60" placeholder="@tielenails"></label>
+          <label class="field">Link das clientes<input type="url" name="urlCliente" placeholder="https://script.google.com/macros/s/…/exec"><span class="hint">Preenchido sozinho quando alguém abre o link das clientes. Se estiver vazio, cole aqui.</span></label>
+          <div class="sec-t"><h3>Atendimento</h3><p>Define os horários que a cliente enxerga.</p></div>
+          <div class="row2">
+            <label class="field">Abre às (hora)<input type="number" name="ini" min="0" max="23" required></label>
+            <label class="field">Fecha às (hora)<input type="number" name="fim" min="1" max="24" required></label>
+          </div>
+          <label class="field">Intervalo entre horários
+            <select name="passo"><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="60">1 hora</option></select>
+          </label>
+          <div class="field">Dias de atendimento
+            <div class="dias" id="dias-box"></div>
+          </div>
+          <div class="row2">
+            <label class="field">Antecedência mínima (min)<input type="number" name="antecedenciaMin" min="0" max="1440" step="15"></label>
+            <label class="field">Agenda aberta por (dias)<input type="number" name="maxDias" min="1" max="180"></label>
+          </div>
+          <label class="field">Cliente pode cancelar até (horas antes)<input type="number" name="cancelarH" min="0" max="48"></label>
+          <div class="sec-t"><h3>Metas e fidelidade</h3><p>Aparecem no Painel e na ficha da cliente.</p></div>
+          <div class="row2">
+            <label class="field">Meta de faturamento do mês (R$)<input type="number" name="metaMensal" min="0" step="50"></label>
+            <label class="field">Brinde a cada (atendimentos)<input type="number" name="fidelidadeCada" min="0" max="50"><span class="hint">0 desliga o programa.</span></label>
+          </div>
+          <label class="field">Brinde<input type="text" name="fidelidadeBrinde" maxlength="60" placeholder="1 esmaltação em gel de brinde"></label>
+          <p class="erro" id="cfg-erro" hidden></p>
+          <button class="btn accent big" type="submit">Salvar ajustes</button>
+        </form>
+        <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+          <div class="card panel-box">
+            <div class="sec-t"><h3>Links</h3><p>O link das clientes vai no Instagram e no WhatsApp. O link da área da Tiele é só seu.</p></div>
+            <label class="field">Link das clientes
+              <span class="linkrow"><input type="text" id="link-cli" readonly><button type="button" class="btn accent" data-copiar>Copiar</button></span>
+            </label>
+            <div class="field">Links por origem (para saber de onde vem cada cliente)
+              <div id="link-orig" class="orig-links"></div>
+              <span class="hint">Use o do Instagram na bio e o do WhatsApp na saudação: a cliente já entra no CRM com a origem certa.</span>
+            </div>
+            <label class="field">Link da área da Tiele
+              <span class="linkrow"><input type="text" id="link-adm" readonly><button type="button" class="btn" data-copiar-adm>Copiar</button></span>
+            </label>
+          </div>
+          <div class="card panel-box">
+            <div class="sec-t"><h3>Divulgação</h3><p>Textos prontos para copiar.</p></div>
+            <label class="field">Instagram (bio)
+              <textarea id="txt-ig" rows="3" readonly></textarea>
+            </label>
+            <button type="button" class="btn" data-copiar-txt="txt-ig">Copiar texto do Instagram</button>
+            <label class="field">WhatsApp Business (mensagem de saudação)
+              <textarea id="txt-wa" rows="4" readonly></textarea>
+            </label>
+            <button type="button" class="btn" data-copiar-txt="txt-wa">Copiar mensagem do WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="bnav" aria-label="Navegação" id="bnav" hidden>
+  <button data-view="painel" class="on">Painel</button>
+  <button data-view="dia">Dia</button>
+  <button data-view="semana">Semana</button>
+  <button data-view="clientes">Clientes</button>
+  <button data-view="funil">Funil</button>
+  <button data-view="campanhas">Campanhas</button>
+  <button data-view="servicos">Serviços</button>
+  <button data-view="ajustes">Ajustes</button>
+</nav>
+
+<div class="scrim" id="drawer" hidden>
+  <form class="drawer" id="form-ag" autocomplete="off">
+    <div class="dh">
+      <div><p class="kicker" id="dr-kicker">Novo agendamento</p><h2 id="dr-title">Cliente</h2></div>
+      <button type="button" class="ic" data-fechar aria-label="Fechar">✕</button>
+    </div>
+    <div class="dbody">
+      <input type="hidden" name="id"><input type="hidden" name="clienteId">
+      <p class="infoline" id="dr-info" hidden></p>
+      <label class="field"><span id="lb-nome">Cliente</span><input type="text" name="nome" maxlength="60" list="cl-names"><datalist id="cl-names"></datalist><span class="hint" id="dr-cli-hint" hidden></span></label>
+      <label class="field" data-noblock>WhatsApp<input type="tel" name="telefone" placeholder="11 91234-5678"></label>
+      <label class="field">Serviço<select name="servicoId" id="f-svc"></select></label>
+      <div class="row2">
+        <label class="field">Dia<input type="date" name="data" required></label>
+        <label class="field">Horário<input type="time" name="inicio" step="900" required></label>
+      </div>
+      <label class="field" data-onlyblock hidden>Duração (min)<input type="number" name="duracao" min="15" max="720" step="15" value="60"></label>
+      <div class="row2" data-noblock>
+        <label class="field">Valor (R$)<input type="number" name="preco" min="0" step="0.01"></label>
+        <label class="field">Situação
+          <select name="status">
+            <option value="agendado">Agendado</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </label>
+      </div>
+      <div class="row2" data-noblock>
+        <label class="field">Pagamento<select name="pagamento"><option value="">—</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="dinheiro">Dinheiro</option></select></label>
+        <label class="field" id="lb-orig">Como conheceu<select name="origemCliente"><option value="">—</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="indicacao">Indicação</option><option value="google">Google</option><option value="outro">Outro</option></select></label>
+      </div>
+      <label class="field">Observação<textarea name="obs" rows="3" maxlength="200" placeholder="Ex.: cor do esmalte, alergias, primeira vez"></textarea></label>
+      <p class="erro" id="f-erro" hidden></p>
+    </div>
+    <div class="df">
+      <div class="grp">
+        <a class="btn ghost" id="dr-wa" target="_blank" rel="noopener" hidden>WhatsApp</a>
+        <button type="button" class="btn ghost" id="dr-ficha" hidden>Ficha</button>
+        <button type="button" class="btn ghost danger" id="dr-cancel" hidden>Cancelar horário</button>
+      </div>
+      <div class="grp">
+        <button type="button" class="btn ghost" data-fechar>Voltar</button>
+        <button type="submit" class="btn accent" id="dr-save">Salvar</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="cdrawer" hidden>
+  <div class="drawer wide" id="ficha"></div>
+</div>
+
+<div class="scrim center" id="pay" hidden>
+  <div class="card pay-card">
+    <p class="kicker">Concluir atendimento</p>
+    <h2 id="pay-t">Como foi o pagamento?</h2>
+    <div class="pay-b">
+      <button class="btn big" data-pay="pix">Pix</button>
+      <button class="btn big" data-pay="cartao">Cartão</button>
+      <button class="btn big" data-pay="dinheiro">Dinheiro</button>
+    </div>
+    <button class="linkish" data-pay="">Concluir sem informar</button>
+    <button class="linkish" data-pay-x>Voltar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<!-- PÁGINA DA CLIENTE -->
+<main id="booking">
+  <div class="bk-brand">
+    <span class="mark studio-mark">T</span>
+    <strong class="studio-name bk-title">Tiele Studio</strong>
+    <span class="bk-sub">Nail design</span>
+    <i class="gold-rule"></i>
+  </div>
+
+  <div id="cb-load" class="load">Carregando horários…</div>
+  <div id="cb-fail" class="card manage" hidden><h2>Agenda indisponível</h2><p class="dim" id="cb-fail-msg"></p></div>
+
+  <div id="cb-flow" hidden>
+    <div class="bk-hero">
+      <h1>Agende seu horário</h1>
+      <p>Escolha o serviço, o dia e a hora. Seu horário fica reservado na hora.</p>
+      <div class="bk-meta" id="cb-meta" hidden></div>
+    </div>
+    <div class="steps" id="cb-steps"><i data-n="1"></i><i data-n="2"></i><i data-n="3"></i><i data-n="4"></i></div>
+
+    <section class="cb-sec" data-step="1">
+      <h2>1. Qual serviço?</h2>
+      <div id="cb-svcs" class="cb-svcs"></div>
+    </section>
+
+    <section class="cb-sec" data-step="2" hidden>
+      <div class="cb-head"><h2>2. Qual dia?</h2><button class="linkish" data-cb-back>Voltar</button></div>
+      <div class="dchips" id="cb-days"></div>
+    </section>
+
+    <section class="cb-sec" data-step="3" hidden>
+      <div class="cb-head"><h2>3. Qual horário?</h2><button class="linkish" data-cb-back>Voltar</button></div>
+      <div class="sumcard" id="cb-sum3"></div>
+      <div class="slotg" id="cb-slots"></div>
+      <p class="dim" style="font-size:12px">Horários riscados já estão reservados.</p>
+    </section>
+
+    <section class="cb-sec" data-step="4" hidden>
+      <div class="cb-head"><h2>4. Seus dados</h2><button class="linkish" data-cb-back>Voltar</button></div>
+      <div class="sumcard" id="cb-sum4"></div>
+      <form id="form-cli" style="display:flex;flex-direction:column;gap:12px">
+        <label class="field">Nome<input type="text" name="nome" required maxlength="60" autocomplete="name"></label>
+        <label class="field">WhatsApp (com DDD)<input type="tel" name="telefone" required autocomplete="tel" placeholder="11 91234-5678"></label>
+        <label class="field">Seu aniversário (opcional)<input type="date" name="nascimento" autocomplete="bday"><span class="hint">A Tiele pode te mandar uma surpresa no seu dia.</span></label>
+        <label class="field">Observação (opcional)<textarea name="obs" rows="2" maxlength="200" placeholder="Ex.: cor do esmalte, tipo de unha"></textarea></label>
+ <p class="hint" id="cb-policy"></p>
+        <input class="hp" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <p class="erro" id="cli-erro" hidden></p>
+        <button class="btn accent big" type="submit" id="cli-btn">Confirmar agendamento</button>
+      </form>
+    </section>
+
+    <section class="cb-sec" data-step="5" hidden>
+      <div class="done">
+        <div class="check">✓</div>
+        <h2>Horário reservado</h2>
+        <p class="dim">Tudo certo. Guarde seu código para consultar ou cancelar depois.</p>
+        <div class="sumcard" id="cb-sum5" style="width:100%;text-align:left"></div>
+        <a class="btn accent big" id="cb-wa" target="_blank" rel="noopener" hidden>Avisar no WhatsApp</a>
+        <a class="btn big" id="cb-cal" target="_blank" rel="noopener">Adicionar ao Google Agenda</a>
+        <a class="btn big" id="cb-map" target="_blank" rel="noopener" hidden>Como chegar</a>
+        <div id="cb-cancel-box" style="width:100%;display:flex;flex-direction:column;gap:8px;align-items:center">
+          <button class="linkish" id="cb-cancel">Cancelar este horário</button>
+          <p class="erro" id="cb-cancel-erro" hidden></p>
+        </div>
+        <button class="linkish" data-cb-reset>Fazer outro agendamento</button>
+      </div>
+    </section>
+  </div>
+
+  <section id="cb-manage" class="card manage" hidden>
+    <p class="kicker">Seu agendamento</p>
+    <div class="status-big"><h2 id="mg-title"></h2><span class="pill" id="mg-pill"></span></div>
+    <div class="sumcard" id="mg-sum"></div>
+    <p class="erro" id="mg-erro" hidden></p>
+    <p class="ok-note" id="mg-ok" hidden></p>
+    <button class="btn danger big" id="mg-cancel" hidden>Cancelar este horário</button>
+    <a class="btn big" id="mg-wa" target="_blank" rel="noopener" hidden>Falar com a Tiele</a>
+  </section>
+</main>
+
+<script>
+/* ===== DEMO: simulação do Apps Script (só para pré-visualizar). REMOVER EM PRODUÇÃO. ===== */
+/* Simulação mínima dos serviços do Google Apps Script (para testes e demonstração). */
+function makeMocks(state) {
+  state.props = state.props || {};
+  state.ss = state.ss || {};
+  state.ev = state.ev || {};
+  state.seq = state.seq || 1;
+  const persist = function () { if (state.onChange) state.onChange(); };
+
+  function mkSheet(sh) {
+    const api = {
+      getName: function () { return sh.name; },
+      setName: function (n) { sh.name = n; persist(); return api; },
+      getLastRow: function () { return sh.rows.length; },
+      getMaxRows: function () { return 1000; },
+      getRange: function (r, c, nr, nc) {
+        nr = nr || 1; nc = nc || 1;
+        const rg = {
+          getValues: function () {
+            const out = [];
+            for (let i = 0; i < nr; i++) {
+              const row = [];
+              for (let j = 0; j < nc; j++) {
+                const v = (sh.rows[r - 1 + i] || [])[c - 1 + j];
+                row.push(v === undefined || v === null ? '' : v);
+              }
+              out.push(row);
+            }
+            return out;
+          },
+          setValues: function (vals) {
+            for (let i = 0; i < nr; i++) {
+              sh.rows[r - 1 + i] = sh.rows[r - 1 + i] || [];
+              for (let j = 0; j < nc; j++) sh.rows[r - 1 + i][c - 1 + j] = vals[i][j];
+            }
+            persist();
+            return rg;
+          },
+          setNumberFormat: function () { return rg; },
+          setFontWeight: function () { return rg; }
+        };
+        return rg;
+      }
+    };
+    return api;
+  }
+  function mkSS(id) {
+    const d = state.ss[id];
+    const api = {
+      getId: function () { return id; },
+      getUrl: function () { return 'https://docs.google.com/spreadsheets/d/' + id; },
+      getSheets: function () { return d.sheets.map(mkSheet); },
+      getSheetByName: function (n) {
+        const s = d.sheets.filter(function (x) { return x.name === n; })[0];
+        return s ? mkSheet(s) : null;
+      },
+      insertSheet: function (n) {
+        const s = { name: n, rows: [] };
+        d.sheets.push(s);
+        persist();
+        return mkSheet(s);
+      }
+    };
+    return api;
+  }
+  const pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  const cache = {};
+  const out = {
+    Logger: { log: function () { if (state.log) state.log.apply(null, arguments); } },
+    SpreadsheetApp: {
+      create: function (nome) {
+        const id = 'ss' + (state.seq++);
+        state.ss[id] = { name: nome, sheets: [{ name: 'Página1', rows: [] }] };
+        persist();
+        return mkSS(id);
+      },
+      openById: function (id) { if (!state.ss[id]) throw new Error('Planilha não encontrada'); return mkSS(id); }
+    },
+    PropertiesService: {
+      getScriptProperties: function () {
+        return {
+          getProperty: function (k) { return state.props[k] === undefined ? null : state.props[k]; },
+          setProperty: function (k, v) { state.props[k] = String(v); persist(); }
+        };
+      }
+    },
+    CacheService: {
+      getScriptCache: function () {
+        return {
+          get: function (k) { return cache[k] === undefined ? null : cache[k]; },
+          put: function (k, v) { cache[k] = String(v); },
+          remove: function (k) { delete cache[k]; }
+        };
+      }
+    },
+    LockService: { getScriptLock: function () { return { tryLock: function () { return true; }, releaseLock: function () {} }; } },
+    Session: {
+      getScriptTimeZone: function () { return 'America/Sao_Paulo'; },
+      getActiveUser: function () { return { getEmail: function () { return state.email === undefined ? 'dona@gmail.com' : state.email; } }; },
+      getEffectiveUser: function () { return { getEmail: function () { return 'dona@gmail.com'; } }; }
+    },
+    ScriptApp: { getService: function () { return { getUrl: function () { return state.url || 'https://script.google.com/macros/s/EXEMPLO/exec'; } }; } },
+    HtmlService: {
+      createHtmlOutput: function (h) {
+        const o = { html: h, setTitle: function () { return o; }, addMetaTag: function () { return o; }, getContent: function () { return h; } };
+        return o;
+      }
+    },
+    CalendarApp: {
+      getDefaultCalendar: function () {
+        return {
+          createEvent: function (t, s, e, o) {
+            const id = 'ev' + (state.seq++);
+            state.ev[id] = { t: t, s: +s, e: +e, d: (o && o.description) || '' };
+            persist();
+            return mkEv(id);
+          },
+          getEventById: function (id) { return state.ev[id] ? mkEv(id) : null; }
+        };
+      }
+    },
+    Utilities: {
+      DigestAlgorithm: { SHA_256: 'SHA_256' },
+      formatDate: function (d, tz, f) {
+        const m = {
+          yyyy: d.getFullYear(), MM: pad(d.getMonth() + 1), dd: pad(d.getDate()),
+          HH: pad(d.getHours()), mm: pad(d.getMinutes()), ss: pad(d.getSeconds())
+        };
+        return f.replace(/'([^']*)'|yyyy|MM|dd|HH|mm|ss/g, function (k, lit) { return lit !== undefined ? lit : m[k]; });
+      },
+      computeDigest: function (alg, s) {
+        let h1 = 0x811c9dc5, h2 = 5381;
+        for (let i = 0; i < s.length; i++) {
+          h1 = Math.imul(h1 ^ s.charCodeAt(i), 16777619) >>> 0;
+          h2 = (Math.imul(h2, 33) + s.charCodeAt(i)) >>> 0;
+        }
+        return [h1 & 255, (h1 >>> 8) & 255, (h1 >>> 16) & 255, h1 >>> 24, h2 & 255, (h2 >>> 8) & 255, (h2 >>> 16) & 255, h2 >>> 24];
+      },
+      base64Encode: function (bytes) {
+        return typeof Buffer !== 'undefined' ? Buffer.from(bytes).toString('base64') : btoa(String.fromCharCode.apply(null, bytes));
+      },
+      getUuid: function () {
+        let s = '';
+        for (let i = 0; i < 32; i++) s += Math.floor(Math.random() * 16).toString(16);
+        return s.slice(0, 8) + '-' + s.slice(8, 12) + '-' + s.slice(12, 16) + '-' + s.slice(16, 20) + '-' + s.slice(20);
+      }
+    }
+  };
+  function mkEv(id) {
+    const e = {
+      getId: function () { return id; },
+      setTitle: function (t) { state.ev[id].t = t; persist(); return e; },
+      setTime: function (s, f) { state.ev[id].s = +s; state.ev[id].e = +f; persist(); return e; },
+      setDescription: function (d) { state.ev[id].d = d; persist(); return e; },
+      deleteEvent: function () { delete state.ev[id]; persist(); }
+    };
+    return e;
+  }
+  return out;
+}
+if (typeof module !== 'undefined') module.exports = { makeMocks: makeMocks };
+
+</script>
+<script>
+/*
+ * AGENDA TIELE STUDIO: agendamento online + CRM
+ * (Google Apps Script + Planilha Google + Google Agenda)
+ *
+ * ANTES DE RODAR: preencha o nome e o WhatsApp abaixo.
+ * Depois escolha a função "configurar" no topo da tela e clique em Executar.
+ * A área da Tiele não usa senha: ela entra com a conta Google dela.
+ */
+const CONFIG_INICIAL = {
+  nomeEstudio: 'Tiele Studio',
+  whatsapp: '11 91234-5678',   // WhatsApp da Tiele com DDD. Exemplo: '11 91234-5678'
+  endereco: '',   // Opcional. Exemplo: 'Rua das Flores, 120 - Centro'
+  instagram: ''   // Opcional. Exemplo: 'tielenails'
+};
+
+const SERVICOS_INICIAIS = [
+  ['alongamento', 'Alongamento em gel', 90, 150],
+  ['manutencao', 'Manutenção de gel', 60, 110],
+  ['esmaltacao', 'Esmaltação em gel', 45, 70],
+  ['blindagem', 'Blindagem', 40, 60],
+  ['pedicure', 'Pedicure', 60, 60]
+];
+
+const CFG_PADRAO = {
+  nomeEstudio: 'Tiele Studio', whatsapp: '', endereco: '', instagram: '', urlCliente: '', ini: 9, fim: 19, passo: 30,
+  dias: [1, 2, 3, 4, 5, 6], antecedenciaMin: 60, maxDias: 45, cancelarMin: 240,
+  metaMensal: 0, fidelidadeCada: 10, fidelidadeBrinde: '1 esmaltação em gel de brinde'
+};
+const COLS = {
+  agenda: ['id', 'codigo', 'data', 'inicio', 'duracao', 'servicoId', 'servico', 'nome', 'telefone', 'obs', 'preco', 'status', 'origem', 'criadoEm', 'eventoId', 'clienteId', 'pagamento'],
+  servicos: ['id', 'nome', 'min', 'preco', 'ativo'],
+  clientes: ['id', 'nome', 'telefone', 'nascimento', 'instagram', 'origem', 'tags', 'notas', 'lead', 'criadoEm', 'ultimoContato', 'resgates', 'ativo'],
+  interacoes: ['id', 'clienteId', 'data', 'tipo', 'texto']
+};
+const STATUS_OK = ['agendado', 'confirmado', 'concluido', 'cancelado'];
+const ORIGENS = ['instagram', 'whatsapp', 'indicacao', 'site', 'google', 'outro'];
+const PAGAMENTOS = ['', 'pix', 'cartao', 'dinheiro'];
+const TIPOS_INTERACAO = ['nota', 'whatsapp', 'ligacao', 'campanha', 'brinde'];
+const PAGINA = '';
+
+/* ---------- Páginas ---------- */
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  const modo = p.page === 'admin' ? 'admin' : 'book';
+  const cod = String(p.c || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12);
+  const html = PAGINA.replace('__MODE__', modo).replace('__CODE__', cod).replace('__ORIGEM__', origem_(p.o));
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('Agenda ' + (cfg_().nomeEstudio || 'Tiele Studio'))
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/* ---------- Instalação ---------- */
+function configurar() {
+  const pr = props_();
+  const dono = emailAtivo_();
+  if (!dono) throw new Error('Não consegui identificar a conta Google. Implante o app com "Executar como: eu" e "Quem pode acessar: qualquer pessoa com conta Google", entre no Gmail da Tiele e rode configurar de novo.');
+  if (CONFIG_INICIAL.whatsapp.indexOf('91234') >= 0 || CONFIG_INICIAL.whatsapp.indexOf('preencha') >= 0)
+    throw new Error('Troque o WhatsApp de exemplo em CONFIG_INICIAL pelo número real da Tiele antes de configurar.');
+  pr.setProperty('dono', dono.toLowerCase());
+  let ss;
+  if (pr.getProperty('ssId')) {
+    ss = SpreadsheetApp.openById(pr.getProperty('ssId'));
+  } else {
+    ss = SpreadsheetApp.create('Agenda ' + (CONFIG_INICIAL.nomeEstudio || 'Tiele Studio'));
+    pr.setProperty('ssId', ss.getId());
+  }
+  let primeira = true;
+  Object.keys(COLS).forEach(function (nome) {
+    let sh = ss.getSheetByName(nome);
+    if (!sh) {
+      if (primeira && ss.getSheets().length === 1 && !COLS[ss.getSheets()[0].getName()]) {
+        sh = ss.getSheets()[0];
+        sh.setName(nome);
+      } else {
+        sh = ss.insertSheet(nome);
+      }
+    }
+    primeira = false;
+    sh.getRange(1, 1, 1, COLS[nome].length).setNumberFormat('@').setValues([COLS[nome]]).setFontWeight('bold');
+    sh.getRange(2, 1, sh.getMaxRows() - 1, COLS[nome].length).setNumberFormat('@');
+  });
+  if (ler_('servicos').length === 0) {
+    SERVICOS_INICIAIS.forEach(function (s) {
+      gravar_('servicos', { id: s[0], nome: s[1], min: s[2], preco: s[3], ativo: 'sim' });
+    });
+  }
+  const c = cfg_();
+  c.nomeEstudio = limpa_(CONFIG_INICIAL.nomeEstudio, 40) || c.nomeEstudio;
+  c.whatsapp = fone_(CONFIG_INICIAL.whatsapp);
+  c.endereco = limpa_(CONFIG_INICIAL.endereco, 120) || c.endereco;
+  c.instagram = insta_(CONFIG_INICIAL.instagram) || c.instagram;
+  pr.setProperty('cfg', JSON.stringify(c));
+  Logger.log('Pronto! Conta da Tiele: ' + dono + ' | Planilha: ' + ss.getUrl());
+  return ss.getUrl();
+}
+
+/* ---------- API pública (clientes) ---------- */
+function dadosPublicos() {
+  try {
+    const c = cfg_(), ag = agora_();
+    registraUrlCliente_(c);
+    const ate = somaDias_(ag.hoje, c.maxDias);
+    const servicos = ler_('servicos').filter(function (s) { return s.ativo !== 'nao'; })
+      .map(function (s) { return { id: s.id, nome: s.nome, min: s.min, preco: s.preco }; });
+    const ocupados = ler_('agenda').filter(function (a) {
+      return a.status !== 'cancelado' && a.data >= ag.hoje && a.data <= ate;
+    }).map(function (a) { return { d: a.data, s: a.inicio, m: a.duracao }; });
+    return {
+      ok: true, nome: c.nomeEstudio, whatsapp: c.whatsapp, endereco: c.endereco, instagram: c.instagram, ini: c.ini, fim: c.fim, passo: c.passo,
+      dias: c.dias, antecedenciaMin: c.antecedenciaMin, maxDias: c.maxDias, cancelarMin: c.cancelarMin,
+      hoje: ag.hoje, agoraMin: ag.min, servicos: servicos, ocupados: ocupados, url: c.urlCliente || urlApp_()
+    };
+  } catch (e) {
+    return { erro: 'O sistema ainda não foi configurado.' };
+  }
+}
+
+function agendar(p) {
+  p = p || {};
+  if (p.site) return { erro: 'Não foi possível concluir.' };
+  const nome = limpa_(p.nome, 60), fone = fone_(p.telefone), obs = limpa_(p.obs, 200);
+  if (nome.length < 2) return { erro: 'Informe seu nome.' };
+  if (fone.length < 10 || fone.length > 13) return { erro: 'Informe um WhatsApp com DDD.' };
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { erro: 'Muitas pessoas agendando agora. Tente de novo em instantes.' };
+  try {
+    const c = cfg_(), ag = agora_();
+    const sv = ler_('servicos').filter(function (s) { return s.id === String(p.servicoId) && s.ativo !== 'nao'; })[0];
+    if (!sv) return { erro: 'Esse serviço não está disponível.' };
+    const cache = CacheService.getScriptCache();
+    const chave = 'taxa:' + fone;
+    const n = Number(cache.get(chave) || 0);
+    if (n >= 5) return { erro: 'Muitas tentativas com este WhatsApp. Tente de novo em alguns minutos.' };
+    cache.put(chave, String(n + 1), 600);
+    const abertos = ler_('agenda').filter(function (a) {
+      return a.telefone === fone && a.status !== 'cancelado' && a.status !== 'concluido' && a.data >= ag.hoje;
+    });
+    if (abertos.length >= 3) return { erro: 'Você já tem 3 agendamentos em aberto. Para marcar mais, fale com a Tiele pelo WhatsApp.' };
+    const data = String(p.data), inicio = String(p.inicio);
+    const erro = validarSlot_(c, data, inicio, sv.min, null, false);
+    if (erro) return { erro: erro, recarregar: true };
+    const cli = garanteCliente_(nome, fone, origem_(p.origem) || 'site', nasc_(p.nascimento));
+    const a = {
+      id: id_(), codigo: codigo_(), data: data, inicio: inicio, duracao: sv.min, servicoId: sv.id, servico: sv.nome,
+      nome: nome, telefone: fone, obs: obs, preco: sv.preco, status: 'agendado', origem: 'site',
+      criadoEm: isoAgora_(), eventoId: '', clienteId: cli.id, pagamento: ''
+    };
+    a.eventoId = sincAgenda_(a);
+    gravar_('agenda', a);
+    return { ok: true, codigo: a.codigo, ag: publico_(a) };
+  } catch (e) {
+    Logger.log('[agendar] ' + (e && e.stack ? e.stack : e));
+    return { erro: 'Não foi possível agendar agora. Tente de novo em instantes.' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* Limita tentativas com código errado: bloqueia a busca se houver muitas falhas recentes. */
+function buscaBloqueada_() {
+  const cache = CacheService.getScriptCache();
+  return Number(cache.get('falhasBusca') || 0) >= 60;
+}
+function registraFalhaBusca_() {
+  const cache = CacheService.getScriptCache();
+  cache.put('falhasBusca', String(Number(cache.get('falhasBusca') || 0) + 1), 600);
+}
+
+function consultar(codigo) {
+  try {
+    if (buscaBloqueada_()) return { erro: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
+    const a = achaCodigo_(codigo);
+    if (!a) { registraFalhaBusca_(); return { erro: 'Agendamento não encontrado. Confira o código.' }; }
+    const cf = cfg_();
+    return { ok: true, ag: publico_(a), cancelarMin: cf.cancelarMin, whatsapp: cf.whatsapp, nome: cf.nomeEstudio, endereco: cf.endereco };
+  } catch (e) {
+    Logger.log('[consultar] ' + (e && e.stack ? e.stack : e));
+    return { erro: 'Não foi possível consultar agora.' };
+  }
+}
+
+function cancelarCliente(codigo) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { erro: 'Tente de novo em instantes.' };
+  try {
+    if (buscaBloqueada_()) return { erro: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
+    const a = achaCodigo_(codigo);
+    if (!a) { registraFalhaBusca_(); return { erro: 'Agendamento não encontrado.' }; }
+    if (a.status === 'cancelado') return { ok: true, ag: publico_(a) };
+    if (a.status === 'concluido') return { erro: 'Esse atendimento já foi concluído.' };
+    const c = cfg_();
+    const faltam = (iniDate_(a.data, a.inicio).getTime() - new Date().getTime()) / 60000;
+    if (faltam < c.cancelarMin) {
+      return { erro: 'Faltam menos de ' + Math.round(c.cancelarMin / 60) + ' horas para o horário. Para cancelar, fale com a Tiele pelo WhatsApp.' };
+    }
+    a.status = 'cancelado';
+    a.eventoId = sincAgenda_(a);
+    gravar_('agenda', a, a._row);
+    return { ok: true, ag: publico_(a) };
+  } catch (e) {
+    Logger.log('[cancelarCliente] ' + (e && e.stack ? e.stack : e));
+    return { erro: 'Não foi possível cancelar agora.' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ---------- API da Tiele (só a conta Google dela) ---------- */
+function admin(op, p) {
+  const negado = checaAcesso_();
+  if (negado) return negado;
+  p = p || {};
+  if (op === 'carregar') return carregar_();
+  if (op === 'listar') return { ok: true, agenda: listarAgenda_(p.de, p.ate), clientes: ler_('clientes').filter(function (c) { return c.ativo !== 'nao'; }).map(limpo_) };
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { erro: 'Sistema ocupado. Tente de novo.' };
+  try {
+    if (op === 'salvar') return salvar_(p);
+    if (op === 'status') return status_(p);
+    if (op === 'servico') return servico_(p);
+    if (op === 'config') return config_(p);
+    if (op === 'cliente') return cliente_(p);
+    if (op === 'interacao') return interacao_(p);
+    if (op === 'brinde') return brinde_(p);
+    return { erro: 'Operação desconhecida.' };
+  } catch (e) {
+    Logger.log('[admin:' + op + '] ' + (e && e.stack ? e.stack : e));
+    return { erro: 'Erro: ' + e.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function carregar_() {
+  const ag = agora_();
+  return {
+    ok: true, hoje: ag.hoje, agoraMin: ag.min, cfg: cfg_(), urlAdmin: urlApp_(), email: emailAtivo_(),
+    servicos: ler_('servicos').map(limpo_),
+    clientes: ler_('clientes').filter(function (c) { return c.ativo !== 'nao'; }).map(limpo_),
+    interacoes: ler_('interacoes').slice(-2000).map(limpo_),
+    agenda: listarAgenda_(somaDias_(ag.hoje, -1100), somaDias_(ag.hoje, 180))
+  };
+}
+
+function listarAgenda_(de, ate) {
+  const ag = agora_();
+  de = /^\d{4}-\d{2}-\d{2}$/.test(de || '') ? de : somaDias_(ag.hoje, -1100);
+  ate = /^\d{4}-\d{2}-\d{2}$/.test(ate || '') ? ate : somaDias_(ag.hoje, 180);
+  return ler_('agenda').filter(function (a) { return a.data >= de && a.data <= ate; }).map(limpo_);
+}
+
+function salvar_(p) {
+  const c = cfg_();
+  const data = String(p.data || ''), inicio = String(p.inicio || '');
+  const bloqueio = p.servicoId === '__block';
+  const ex = p.id ? ler_('agenda').filter(function (a) { return a.id === p.id; })[0] : null;
+  if (p.id && !ex) return { erro: 'Agendamento não encontrado.' };
+  let sv = null, dur, servNome, status;
+  if (bloqueio) {
+    dur = Math.max(15, Math.min(720, Number(p.duracao) || 60));
+    servNome = 'Bloqueio';
+    status = 'bloqueado';
+  } else {
+    sv = ler_('servicos').filter(function (s) { return s.id === p.servicoId; })[0];
+    if (!sv) return { erro: 'Escolha um serviço.' };
+    dur = (ex && ex.servicoId === sv.id) ? ex.duracao : sv.min;
+    servNome = sv.nome;
+    status = STATUS_OK.indexOf(p.status) >= 0 ? p.status : 'agendado';
+  }
+  let cli = null;
+  if (!bloqueio) {
+    const id = p.clienteId || (ex && ex.clienteId) || '';
+    if (id) cli = ler_('clientes').filter(function (x) { return x.id === id; })[0] || null;
+  }
+  const nome = limpa_(p.nome, 60) || (cli ? cli.nome : '') || (bloqueio ? 'Bloqueado' : '');
+  if (!nome) return { erro: 'Informe o nome da cliente.' };
+  if (status !== 'cancelado') {
+    const erro = validarSlot_(c, data, inicio, dur, ex ? ex.id : null, true);
+    if (erro) return { erro: erro };
+  } else if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !/^\d{2}:\d{2}$/.test(inicio)) {
+    return { erro: 'Data ou horário inválido.' };
+  }
+  let fone = fone_(p.telefone) || (cli ? cli.telefone : '');
+  if (fone && (fone.length < 10 || fone.length > 13)) return { erro: 'WhatsApp inválido. Informe com DDD.' };
+  if (!bloqueio && !cli) cli = garanteCliente_(nome, fone, origem_(p.origemCliente), '');
+  else if (cli && cli.lead === 'sim') { cli.lead = ''; gravar_('clientes', cli, cli._row); }
+  const preco = (p.preco === '' || p.preco === null || p.preco === undefined || isNaN(Number(p.preco))) ? (sv ? sv.preco : 0) : Math.max(0, Number(p.preco));
+  const pag = PAGAMENTOS.indexOf(p.pagamento) >= 0 ? p.pagamento : (ex ? ex.pagamento : '');
+  const a = {
+    id: ex ? ex.id : id_(), codigo: ex ? ex.codigo : codigo_(), data: data, inicio: inicio, duracao: dur,
+    servicoId: bloqueio ? '__block' : sv.id, servico: servNome, nome: nome, telefone: fone,
+    obs: limpa_(p.obs, 200), preco: bloqueio ? 0 : preco, status: status, origem: ex ? ex.origem : 'manual',
+    criadoEm: ex ? ex.criadoEm : isoAgora_(), eventoId: ex ? ex.eventoId : '', clienteId: cli ? cli.id : '',
+    pagamento: status === 'concluido' ? pag : ''
+  };
+  a.eventoId = sincAgenda_(a);
+  gravar_('agenda', a, ex ? ex._row : undefined);
+  return { ok: true, ag: a, cliente: cli ? limpo_(cli) : null };
+}
+
+function status_(p) {
+  const a = ler_('agenda').filter(function (x) { return x.id === p.id; })[0];
+  if (!a) return { erro: 'Agendamento não encontrado.' };
+  if (STATUS_OK.indexOf(p.status) < 0) return { erro: 'Situação inválida.' };
+  if (a.status === 'cancelado' && p.status !== 'cancelado') {
+    const erro = validarSlot_(cfg_(), a.data, a.inicio, a.duracao, a.id, true);
+    if (erro) return { erro: erro };
+  }
+  a.status = p.status;
+  if (p.status === 'concluido') { if (PAGAMENTOS.indexOf(p.pagamento) >= 0 && p.pagamento) a.pagamento = p.pagamento; } else a.pagamento = '';
+  a.eventoId = sincAgenda_(a);
+  gravar_('agenda', a, a._row);
+  return { ok: true, ag: limpo_(a) };
+}
+
+function servico_(p) {
+  if (p.acao === 'remover') {
+    const s = ler_('servicos').filter(function (x) { return x.id === p.id; })[0];
+    if (!s) return { erro: 'Serviço não encontrado.' };
+    s.ativo = 'nao';
+    gravar_('servicos', s, s._row);
+    return { ok: true, servicos: ler_('servicos').map(limpo_) };
+  }
+  const nome = limpa_(p.nome, 50), min = Number(p.min), preco = Number(p.preco);
+  if (!nome) return { erro: 'Informe o nome do serviço.' };
+  if (!(min >= 10 && min <= 480)) return { erro: 'A duração deve ficar entre 10 e 480 minutos.' };
+  if (!(preco >= 0)) return { erro: 'Informe um preço válido.' };
+  const ex = p.id ? ler_('servicos').filter(function (x) { return x.id === p.id; })[0] : null;
+  const s = { id: ex ? ex.id : id_(), nome: nome, min: min, preco: preco, ativo: 'sim' };
+  gravar_('servicos', s, ex ? ex._row : undefined);
+  return { ok: true, servicos: ler_('servicos').map(limpo_) };
+}
+
+function config_(p) {
+  const c = cfg_();
+  const ini = Number(p.ini), fim = Number(p.fim), passo = Number(p.passo);
+  if (!(ini >= 0 && ini <= 23 && fim > ini && fim <= 24)) return { erro: 'Confira os horários de abertura e fechamento.' };
+  if ([15, 30, 60].indexOf(passo) < 0) return { erro: 'Intervalo inválido.' };
+  const dias = (Array.isArray(p.dias) ? p.dias : []).map(Number).filter(function (d) { return d >= 0 && d <= 6; });
+  if (!dias.length) return { erro: 'Marque pelo menos um dia de atendimento.' };
+  const zap = fone_(p.whatsapp);
+  if (zap && (zap.length < 10 || zap.length > 13)) return { erro: 'WhatsApp inválido. Informe com DDD.' };
+  const url = String(p.urlCliente || '').trim();
+  if (url && !/^https:\/\/script\.google\.com\/[A-Za-z0-9_\/\-]+$/.test(url)) return { erro: 'O link das clientes precisa ser o endereço que o Google gerou (começa com https://script.google.com).' };
+  c.nomeEstudio = limpa_(p.nomeEstudio, 40) || c.nomeEstudio;
+  c.whatsapp = zap;
+  c.endereco = limpa_(p.endereco, 120);
+  c.instagram = insta_(p.instagram);
+  if (url) c.urlCliente = url;
+  c.ini = ini; c.fim = fim; c.passo = passo; c.dias = dias;
+  c.antecedenciaMin = Math.max(0, Math.min(1440, Number(p.antecedenciaMin) || 0));
+  c.maxDias = Math.max(1, Math.min(180, Number(p.maxDias) || 45));
+  c.cancelarMin = Math.max(0, Math.min(2880, Number(p.cancelarMin) || 0));
+  c.metaMensal = Math.max(0, Math.min(1000000, Number(p.metaMensal) || 0));
+  c.fidelidadeCada = Math.max(0, Math.min(50, Math.round(Number(p.fidelidadeCada) || 0)));
+  c.fidelidadeBrinde = limpa_(p.fidelidadeBrinde, 60) || c.fidelidadeBrinde;
+  props_().setProperty('cfg', JSON.stringify(c));
+  return { ok: true, cfg: c };
+}
+
+/* ---------- CRM ---------- */
+function cliente_(p) {
+  if (p.acao === 'arquivar') {
+    const c = ler_('clientes').filter(function (x) { return x.id === p.id; })[0];
+    if (!c) return { erro: 'Cliente não encontrada.' };
+    c.ativo = 'nao';
+    gravar_('clientes', c, c._row);
+    return { ok: true, id: c.id };
+  }
+  const nome = limpa_(p.nome, 60);
+  if (nome.length < 2) return { erro: 'Informe o nome da cliente.' };
+  const fone = fone_(p.telefone);
+  if (fone && (fone.length < 10 || fone.length > 13)) return { erro: 'WhatsApp inválido. Informe com DDD.' };
+  const todos = ler_('clientes');
+  const ex = p.id ? todos.filter(function (x) { return x.id === p.id; })[0] : null;
+  if (p.id && !ex) return { erro: 'Cliente não encontrada.' };
+  if (fone) {
+    const dup = todos.filter(function (x) { return x.telefone === fone && x.ativo !== 'nao' && (!ex || x.id !== ex.id); })[0];
+    if (dup) return { erro: 'Já existe uma cliente com esse WhatsApp: ' + dup.nome + '.' };
+  }
+  const nascRaw = String(p.nascimento || '').trim();
+  const nascim = nasc_(nascRaw);
+  if (nascRaw && !nascim) return { erro: 'Data de aniversário inválida.' };
+  const c = {
+    id: ex ? ex.id : id_(), nome: nome, telefone: fone, nascimento: nascim, instagram: insta_(p.instagram),
+    origem: origem_(p.origem), tags: tags_(p.tags), notas: limpa_(p.notas, 1000), lead: p.lead ? 'sim' : '',
+    criadoEm: ex ? ex.criadoEm : isoAgora_(), ultimoContato: ex ? ex.ultimoContato : '', resgates: ex ? ex.resgates : 0, ativo: 'sim'
+  };
+  c.resgates = Number(c.resgates) || 0;
+  gravar_('clientes', c, ex ? ex._row : undefined);
+  if (ex && (ex.nome !== nome || ex.telefone !== fone)) {
+    ler_('agenda').filter(function (a) { return a.clienteId === c.id; }).forEach(function (a) {
+      a.nome = nome; a.telefone = fone;
+      gravar_('agenda', a, a._row);
+    });
+  }
+  return { ok: true, cliente: c };
+}
+
+function interacao_(p) {
+  const cli = ler_('clientes').filter(function (x) { return x.id === p.clienteId; })[0];
+  if (!cli) return { erro: 'Cliente não encontrada.' };
+  const tipo = TIPOS_INTERACAO.indexOf(p.tipo) >= 0 ? p.tipo : 'nota';
+  const texto = limpa_(p.texto, 500);
+  if (!texto) return { erro: 'Escreva o que aconteceu.' };
+  const i = { id: id_(), clienteId: cli.id, data: isoAgora_(), tipo: tipo, texto: texto };
+  gravar_('interacoes', i);
+  if (tipo === 'whatsapp' || tipo === 'ligacao' || tipo === 'campanha') {
+    cli.ultimoContato = agora_().hoje;
+    gravar_('clientes', cli, cli._row);
+  }
+  return { ok: true, interacao: i, cliente: limpo_(cli) };
+}
+
+function brinde_(p) {
+  const cli = ler_('clientes').filter(function (x) { return x.id === p.clienteId; })[0];
+  if (!cli) return { erro: 'Cliente não encontrada.' };
+  const c = cfg_();
+  if (!(c.fidelidadeCada > 0)) return { erro: 'O programa de fidelidade está desligado nos Ajustes.' };
+  const conc = ler_('agenda').filter(function (a) { return a.clienteId === cli.id && a.status === 'concluido'; }).length;
+  const disp = Math.floor(conc / c.fidelidadeCada) - (Number(cli.resgates) || 0);
+  if (disp < 1) return { erro: 'Essa cliente ainda não tem brinde disponível.' };
+  cli.resgates = (Number(cli.resgates) || 0) + 1;
+  gravar_('clientes', cli, cli._row);
+  const i = { id: id_(), clienteId: cli.id, data: isoAgora_(), tipo: 'brinde', texto: 'Brinde resgatado: ' + c.fidelidadeBrinde };
+  gravar_('interacoes', i);
+  return { ok: true, interacao: i, cliente: limpo_(cli) };
+}
+
+function garanteCliente_(nome, fone, origem, nasc) {
+  const todos = ler_('clientes');
+  let c = fone
+    ? todos.filter(function (x) { return x.telefone === fone; })[0]
+    : todos.filter(function (x) { return !x.telefone && x.ativo !== 'nao' && x.nome.toLowerCase() === nome.toLowerCase(); })[0];
+  if (c) {
+    let mudou = false;
+    if (c.lead === 'sim') { c.lead = ''; mudou = true; }
+    if (c.ativo === 'nao') { c.ativo = 'sim'; mudou = true; }
+    if (!c.nascimento && nasc) { c.nascimento = nasc; mudou = true; }
+    if (!c.origem && origem) { c.origem = origem; mudou = true; }
+    if (mudou) gravar_('clientes', c, c._row);
+    return c;
+  }
+  c = {
+    id: id_(), nome: nome, telefone: fone, nascimento: nasc || '', instagram: '', origem: origem || '', tags: '', notas: '',
+    lead: '', criadoEm: isoAgora_(), ultimoContato: '', resgates: 0, ativo: 'sim'
+  };
+  c._row = gravar_('clientes', c);
+  return c;
+}
+
+/* ---------- Regras ---------- */
+function validarSlot_(c, data, inicio, dur, ignorarId, ehAdmin) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !/^\d{2}:\d{2}$/.test(inicio) || somaDias_(data, 0) !== data) return 'Data ou horário inválido.';
+  const s0 = toMin_(inicio), s1 = s0 + dur;
+  if (s0 < 0 || s1 > 24 * 60) return 'Horário inválido.';
+  if (!ehAdmin) {
+    const ag = agora_();
+    if (data < ag.hoje || data > somaDias_(ag.hoje, c.maxDias)) return 'Esse dia não está disponível para agendamento.';
+    if (c.dias.indexOf(diaSemana_(data)) < 0) return 'Não há atendimento nesse dia.';
+    if (s0 < c.ini * 60 || s1 > c.fim * 60) return 'Esse horário está fora do período de atendimento.';
+    if ((s0 - c.ini * 60) % c.passo !== 0) return 'Horário inválido.';
+    if (data === ag.hoje && s0 < ag.min + c.antecedenciaMin) return 'Esse horário já passou ou está muito próximo. Escolha outro.';
+  }
+  const conf = ler_('agenda').filter(function (a) {
+    return a.id !== ignorarId && a.data === data && a.status !== 'cancelado' && s0 < toMin_(a.inicio) + a.duracao && toMin_(a.inicio) < s1;
+  })[0];
+  if (conf) return ehAdmin ? 'Conflito com ' + conf.nome + ' (' + conf.inicio + ').' : 'Esse horário acabou de ser reservado. Escolha outro.';
+  return '';
+}
+
+function sincAgenda_(a) {
+  try {
+    const cal = CalendarApp.getDefaultCalendar();
+    let ev = null;
+    if (a.eventoId) { try { ev = cal.getEventById(a.eventoId); } catch (e) { ev = null; } }
+    if (a.status === 'cancelado') {
+      if (ev) { try { ev.deleteEvent(); } catch (e) { /* ignora */ } }
+      return '';
+    }
+    const ini = iniDate_(a.data, a.inicio), fim = new Date(ini.getTime() + a.duracao * 60000);
+    const titulo = a.status === 'bloqueado' ? 'Bloqueado: ' + a.nome : a.servico + ' - ' + a.nome;
+    const desc = a.status === 'bloqueado' ? 'Horário bloqueado' : 'WhatsApp: ' + a.telefone + (a.obs ? '\nObs: ' + a.obs : '') + '\nValor: R$ ' + a.preco + '\nCódigo: ' + a.codigo;
+    if (ev) { ev.setTitle(titulo); ev.setTime(ini, fim); ev.setDescription(desc); return ev.getId(); }
+    ev = cal.createEvent(titulo, ini, fim, { description: desc });
+    return ev.getId();
+  } catch (e) {
+    Logger.log('Google Agenda: ' + e);
+    return a.eventoId || '';
+  }
+}
+
+/* ---------- Utilidades ---------- */
+function props_() { return PropertiesService.getScriptProperties(); }
+function tz_() { return Session.getScriptTimeZone() || 'America/Sao_Paulo'; }
+function cfg_() {
+  const raw = props_().getProperty('cfg');
+  return Object.assign({}, CFG_PADRAO, raw ? JSON.parse(raw) : {});
+}
+function urlApp_() { try { return ScriptApp.getService().getUrl() || ''; } catch (e) { return ''; } }
+function pad_(n) { return (n < 10 ? '0' : '') + n; }
+function agora_() {
+  const d = new Date(), z = tz_();
+  return {
+    hoje: Utilities.formatDate(d, z, 'yyyy-MM-dd'),
+    min: Number(Utilities.formatDate(d, z, 'HH')) * 60 + Number(Utilities.formatDate(d, z, 'mm'))
+  };
+}
+function isoAgora_() { return Utilities.formatDate(new Date(), tz_(), "yyyy-MM-dd'T'HH:mm:ss"); }
+function somaDias_(s, n) {
+  const p = s.split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2] + n);
+  return d.getFullYear() + '-' + pad_(d.getMonth() + 1) + '-' + pad_(d.getDate());
+}
+function diaSemana_(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]).getDay(); }
+function toMin_(t) { const p = String(t).split(':').map(Number); return p[0] * 60 + p[1]; }
+function iniDate_(data, inicio) {
+  const p = data.split('-').map(Number), m = toMin_(inicio);
+  return new Date(p[0], p[1] - 1, p[2], Math.floor(m / 60), m % 60);
+}
+function limpa_(s, max) {
+  return String(s === null || s === undefined ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().replace(/^[=+\-@]+/, '').slice(0, max);
+}
+function fone_(s) { return String(s || '').replace(/\D/g, '').slice(0, 13); }
+function id_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 12); }
+function codigo_() {
+  const al = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 8; i++) c += al.charAt(Math.floor(Math.random() * al.length));
+  return c;
+}
+function origem_(o) {
+  const v = String(o || '').toLowerCase().replace(/[^a-z]/g, '');
+  return ORIGENS.indexOf(v) >= 0 ? v : '';
+}
+function nasc_(s) {
+  s = String(s || '').trim();
+  let m, d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { m = Number(s.slice(5, 7)); d = Number(s.slice(8)); if (Number(s.slice(0, 4)) < 1900) return ''; }
+  else if (/^\d{2}-\d{2}$/.test(s)) { m = Number(s.slice(0, 2)); d = Number(s.slice(3)); }
+  else return '';
+  return (m >= 1 && m <= 12 && d >= 1 && d <= 31) ? s : '';
+}
+function tags_(s) {
+  const out = [];
+  String(s || '').split(',').forEach(function (t) {
+    t = limpa_(t, 20);
+    if (t && out.indexOf(t) < 0 && out.length < 8) out.push(t);
+  });
+  return out.join(',');
+}
+function emailAtivo_() { try { return String(Session.getActiveUser().getEmail() || '').toLowerCase(); } catch (e) { return ''; } }
+function emailDono_() { try { return String(Session.getEffectiveUser().getEmail() || '').toLowerCase(); } catch (e) { return ''; } }
+function checaAcesso_() {
+  const dono = props_().getProperty('dono');
+  const eu = emailAtivo_();
+  if (!dono) return { erro: 'O sistema ainda não foi configurado.', acesso: true };
+  if (!eu || eu !== dono) {
+    return { erro: 'Acesso restrito à conta Google da Tiele.', acesso: true, conta: eu };
+  }
+  return null;
+}
+function insta_(s) { return String(s || '').replace(/^.*instagram\.com\//i, '').replace(/[^A-Za-z0-9_.]/g, '').slice(0, 30); }
+function registraUrlCliente_(c) {
+  // Só registra quando a visita é anônima (link das clientes). A área da Tiele roda com a conta dela.
+  try {
+    if (emailAtivo_()) return;
+    const u = urlApp_();
+    if (u && c.urlCliente !== u) { c.urlCliente = u; props_().setProperty('cfg', JSON.stringify(c)); }
+  } catch (e) { /* ignora */ }
+}
+function achaCodigo_(codigo) {
+  const c = String(codigo || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (c.length < 6) return null;
+  return ler_('agenda').filter(function (a) { return a.codigo === c; })[0] || null;
+}
+function publico_(a) {
+  return { codigo: a.codigo, data: a.data, inicio: a.inicio, duracao: a.duracao, servico: a.servico, nome: a.nome, preco: a.preco, status: a.status };
+}
+function limpo_(o) { const r = {}; Object.keys(o).forEach(function (k) { if (k !== '_row') r[k] = o[k]; }); return r; }
+function ss_() {
+  const id = props_().getProperty('ssId');
+  if (!id) throw new Error('Rode a função "configurar" primeiro.');
+  return SpreadsheetApp.openById(id);
+}
+function aba_(nome) {
+  const s = ss_().getSheetByName(nome);
+  if (!s) throw new Error('Aba ' + nome + ' não encontrada. Rode "configurar" de novo.');
+  return s;
+}
+function norm_(c, v) {
+  if (v instanceof Date) {
+    if (c === 'data') return Utilities.formatDate(v, tz_(), 'yyyy-MM-dd');
+    if (c === 'inicio') return Utilities.formatDate(v, tz_(), 'HH:mm');
+    return Utilities.formatDate(v, tz_(), "yyyy-MM-dd'T'HH:mm:ss");
+  }
+  if (c === 'duracao' || c === 'preco' || c === 'min' || c === 'resgates') return Number(v) || 0;
+  return v === null || v === undefined ? '' : String(v);
+}
+function ler_(nome) {
+  const cols = COLS[nome], sh = aba_(nome), n = sh.getLastRow();
+  if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, cols.length).getValues().map(function (r, i) {
+    const o = { _row: i + 2 };
+    cols.forEach(function (c, j) { o[c] = norm_(c, r[j]); });
+    return o;
+  }).filter(function (o) { return o.id; });
+}
+function gravar_(nome, obj, linha) {
+  const cols = COLS[nome], sh = aba_(nome);
+  const r = linha || sh.getLastRow() + 1;
+  const vals = cols.map(function (c) { return obj[c] === undefined || obj[c] === null ? '' : obj[c]; });
+  sh.getRange(r, 1, 1, cols.length).setNumberFormat('@').setValues([vals]);
+  return r;
+}
+
+
+/* DEMO: simulação de dados para pré-visualização. REMOVER EM PRODUÇÃO (o backend real fica no Code.gs). */
+window.__DEMO = true;
+(function () {
+  var KEY = 'tiele-demo-v1', state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  function hoje() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  if (state.seedDay !== hoje()) state = {};
+  state.url = location.href.split('#')[0].split('?')[0];
+  window.__setEmail = function (e) { state.email = e; };
+  state.onChange = function () { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  Object.assign(window, makeMocks(state));
+  window.__reiniciar = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
+  window.__demoSeed = function () {
+    configurar();
+    admin('config', { nomeEstudio: 'Tiele Studio', whatsapp: '11 91234-5678', endereco: 'Rua das Flores, 120 - Centro', instagram: '@tielenails', ini: 9, fim: 19, passo: 30, dias: [1, 2, 3, 4, 5, 6], antecedenciaMin: 60, maxDias: 45, cancelarMin: 240, metaMensal: 6000, fidelidadeCada: 5, fidelidadeBrinde: '1 esmaltação em gel de brinde' });
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    var ymd = function (n) { var d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+    var md = function (n) { return '1992-' + ymd(n).slice(5); };
+    var aberto = function (n) { while (new Date(ymd(n) + 'T12:00:00').getDay() === 0) n++; return ymd(n); };
+    var erros = [];
+    var chk = function (r) { if (r && r.erro) erros.push(r.erro); return r; };
+    var C = function (o) { return chk(admin('cliente', o)).cliente.id; };
+    var V = function (cid, svc, dias, hora, status, pag) { chk(admin('salvar', { clienteId: cid, servicoId: svc, data: ymd(dias), inicio: hora, status: status || 'concluido', pagamento: pag || '' })); };
+    var PG = ['pix', 'cartao', 'pix', 'dinheiro'];
+    var hist = function (cid, svc, hora, dias) { dias.forEach(function (d, i) { V(cid, svc, d, hora, 'concluido', PG[i % 4]); }); };
+
+    var marina = C({ nome: 'Marina Costa', telefone: '11981234567', nascimento: md(3), instagram: '@marinacosta', origem: 'instagram', tags: 'vip,gel', notas: 'Prefere tons nude e formato amendoado. Alérgica a acetona forte.' });
+    hist(marina, 'manutencao', '09:00', [-150, -120, -90, -60, -30, -5]);
+    V(marina, 'esmaltacao', 0, '09:00', 'confirmado');
+    chk(admin('interacao', { clienteId: marina, tipo: 'nota', texto: 'Pediu desconto para levar a irmã no mês que vem.' }));
+
+    var patricia = C({ nome: 'Patrícia Lima', telefone: '11976543210', origem: 'indicacao', tags: 'noiva', notas: 'Casamento em março. Quer nail art delicada.' });
+    hist(patricia, 'esmaltacao', '11:30', [-100, -70, -40, -12]);
+    V(patricia, 'alongamento', 0, '10:00', 'confirmado');
+
+    var fernanda = C({ nome: 'Fernanda Alves', telefone: '11999887766', origem: 'whatsapp' });
+    hist(fernanda, 'esmaltacao', '14:30', [-60, -30]);
+    V(fernanda, 'manutencao', 0, '14:00', 'agendado');
+
+    var juliana = C({ nome: 'Juliana Rocha', telefone: '11988776655', nascimento: md(6), origem: 'instagram' });
+    hist(juliana, 'esmaltacao', '16:00', [-25]);
+    V(juliana, 'pedicure', 0, '16:30', 'agendado');
+
+    var camila = C({ nome: 'Camila Duarte', telefone: '11955443322', origem: 'instagram' });
+    V(camila, 'blindagem', 1, '09:30', 'confirmado');
+    var renata = C({ nome: 'Renata Souza', telefone: '11944332211', origem: 'whatsapp' });
+    hist(renata, 'esmaltacao', '12:00', [-75, -50]);
+    V(renata, 'alongamento', 1, '13:00', 'agendado');
+    var daniela = C({ nome: 'Daniela Ferraz', telefone: '11911223344', origem: 'indicacao' });
+    hist(daniela, 'manutencao', '17:00', [-140, -110]);
+    var luana = C({ nome: 'Luana Reis', telefone: '11922334455', origem: 'google' });
+    hist(luana, 'esmaltacao', '15:00', [-52, -26]);
+    var carol = C({ nome: 'Carol Mendes', telefone: '11933445566', origem: 'instagram' });
+    V(carol, 'blindagem', -1, '11:00', 'concluido', 'pix');
+    var bianca = C({ nome: 'Bianca Martins', telefone: '11933221100', origem: 'instagram', lead: true });
+    V(bianca, 'manutencao', 3, '10:00', 'agendado');
+    C({ nome: 'Tatiane Gomes', telefone: '11900112233', origem: 'whatsapp', lead: true, notas: 'Perguntou preço do alongamento pelo direct.' });
+    chk(admin('salvar', { servicoId: '__block', data: ymd(0), inicio: '12:00', duracao: 60, nome: 'Almoço' }));
+    chk(agendar({ servicoId: 'esmaltacao', data: aberto(2), inicio: '15:00', nome: 'Larissa Prado', telefone: '11922110099', obs: 'Primeira vez', origem: 'instagram', nascimento: md(20) }));
+    window.__seedErros = erros;
+    state.seedDay = hoje();
+    state.onChange();
+  };
+  if (!state.props || !state.props.ssId) window.__demoSeed();
+  window.google = { script: { run: (function () {
+    function runner(ok, fail) {
+      var r = {
+        withSuccessHandler: function (f) { return runner(f, fail); },
+        withFailureHandler: function (f) { return runner(ok, f); }
+      };
+      ['dadosPublicos', 'agendar', 'consultar', 'cancelarCliente', 'admin'].forEach(function (fn) {
+        r[fn] = function () {
+          var a = [].slice.call(arguments);
+          setTimeout(function () {
+            try { var out = window[fn].apply(null, a); if (ok) ok(JSON.parse(JSON.stringify(out))); }
+            catch (e) { if (fail) fail(e); }
+          }, 120);
+        };
+      });
+      return r;
+    }
+    return runner(null, null);
+  })() } };
+})();
+
+</script>
+<script>
+const MODO_SRV = '__MODE__', CODIGO_SRV = '__CODE__', ORIGEM_SRV = '__ORIGEM__';
+const DEMO = !!window.__DEMO;
+const ORIGEM = (DEMO ? new URLSearchParams(location.search).get('o') || '' : (ORIGEM_SRV === '__ORIGEM__' ? '' : ORIGEM_SRV)).toLowerCase().replace(/[^a-z]/g, '');
+const MODO = DEMO ? (location.hash === '#tiele' ? 'admin' : 'book') : MODO_SRV;
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parse = s => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const weekStart = s => addDays(s, -((parse(s).getDay() + 6) % 7));
+const toMin = t => { const p = t.split(':').map(Number); return p[0] * 60 + p[1]; };
+const fromMin = n => pad(Math.floor(n / 60)) + ':' + pad(n % 60);
+const brl = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtDate = s => s.slice(8) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4);
+const fmtShort = s => s.slice(8) + '/' + s.slice(5, 7);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const wd = s => cap(parse(s).toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').slice(0, 3));
+const mes = s => parse(s).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+const longDate = s => cap(parse(s).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }));
+const fmtFone = d => { d = String(d || '').replace(/\D/g, ''); if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7); if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6); return d; };
+const waLink = (phone, msg) => { const d = String(phone || '').replace(/\D/g, ''); if (!d) return ''; return 'https://wa.me/' + (d.length <= 11 ? '55' + d : d) + '?text=' + encodeURIComponent(msg); };
+const LABEL = { agendado: 'Agendado', confirmado: 'Confirmado', concluido: 'Concluído', cancelado: 'Cancelado', bloqueado: 'Bloqueado' };
+
+function srv(fn) {
+  const args = [].slice.call(arguments, 1);
+  return new Promise((res, rej) => {
+    try {
+      const r = google.script.run.withSuccessHandler(res).withFailureHandler(rej);
+      r[fn].apply(r, args);
+    } catch (e) { rej(e); }
+  });
+}
+function copiar(texto, ok) {
+  const fim = () => toast(ok || 'Copiado.');
+  const alt = () => { const t = document.createElement('textarea'); t.value = texto; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); fim(); } catch (e) { toast('Selecione e copie o texto manualmente.'); } t.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(fim).catch(alt); else alt();
+}
+let toastT;
+function toast(msg, undo) {
+  const t = $('#toast');
+  t.innerHTML = '<span>' + esc(msg) + '</span>' + (undo ? '<button id="undo">Desfazer</button>' : '');
+  t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 5200);
+  const u = $('#undo'); if (u) u.onclick = () => { t.hidden = true; undo(); };
+}
+function marca(nome) {
+  $$('.studio-name').forEach(e => e.textContent = nome);
+  $$('.studio-mark').forEach(e => e.textContent = (nome || 'T').trim().charAt(0).toUpperCase());
+  document.title = 'Agenda ' + nome;
+}
+
+/* =====================  PÁGINA DA CLIENTE  ===================== */
+let P = null;
+let cb = { svc: null, day: null, hora: null, step: 1, codigo: null };
+
+async function iniciarCliente() {
+  document.body.classList.add('cliente');
+  $('#booking').style.display = 'block';
+  if (CODIGO_SRV && CODIGO_SRV !== '__CODE__') return abrirGerenciar(CODIGO_SRV);
+  try { P = await srv('dadosPublicos'); } catch (e) { P = { erro: 'Não foi possível carregar. Atualize a página.' }; }
+  $('#cb-load').hidden = true;
+  if (!P.ok) { $('#cb-fail').hidden = false; $('#cb-fail-msg').textContent = P.erro || 'Tente novamente em instantes.'; return; }
+  marca(P.nome);
+  const meta = [];
+  if (P.endereco) meta.push('<a href="' + mapsLink(P.endereco) + '" target="_blank" rel="noopener">' + esc(P.endereco) + '</a>');
+  if (P.instagram) meta.push('<a href="https://instagram.com/' + esc(P.instagram) + '" target="_blank" rel="noopener">@' + esc(P.instagram) + '</a>');
+  $('#cb-meta').hidden = !meta.length; $('#cb-meta').innerHTML = meta.join('<span>·</span>');
+  $('#cb-policy').textContent = (P.cancelarMin ? 'Você pode cancelar pelo próprio site até ' + Math.round(P.cancelarMin / 60) + ' horas antes do horário. ' : '') + 'Usamos seus dados apenas para organizar seu atendimento.';
+  const lembrado = lerCliente();
+  if (lembrado.nome) $('#form-cli').elements.nome.value = lembrado.nome;
+  if (lembrado.telefone) $('#form-cli').elements.telefone.value = lembrado.telefone;
+  $('#cb-flow').hidden = false;
+  renderBooking();
+}
+const mapsLink = e => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(e);
+function lerCliente() { try { return JSON.parse(localStorage.getItem('agenda-cliente') || '{}') || {}; } catch (e) { return {}; } }
+function guardarCliente(n, t) { try { localStorage.setItem('agenda-cliente', JSON.stringify({ nome: n, telefone: t })); } catch (e) { /* sem armazenamento */ } }
+function diasAbertos() {
+  const out = [];
+  for (let i = 0; i <= P.maxDias; i++) { const d = addDays(P.hoje, i); if (P.dias.indexOf(parse(d).getDay()) >= 0) out.push(d); }
+  return out;
+}
+function slotsFor(d, dur) {
+  const out = [];
+  for (let t = P.ini * 60; t + dur <= P.fim * 60; t += P.passo) {
+    if (d === P.hoje && t < P.agoraMin + P.antecedenciaMin) continue;
+    const busy = P.ocupados.some(o => o.d === d && t < toMin(o.s) + o.m && toMin(o.s) < t + dur);
+    out.push({ t: fromMin(t), busy });
+  }
+  return out;
+}
+function renderBooking() {
+  $('#cb-svcs').innerHTML = P.servicos.map(s => '<button type="button" class="scard' + (cb.svc === s.id ? ' on' : '') + '" data-cb-svc="' + esc(s.id) + '"><span class="sc-n">' + esc(s.nome) + '</span><span class="sc-m">' + s.min + ' min</span><span class="sc-p num">' + brl(s.preco) + '</span></button>').join('') || '<p class="dim">Nenhum serviço disponível no momento.</p>';
+  $('#cb-days').innerHTML = diasAbertos().map(d => '<button type="button" class="dchip' + (cb.day === d ? ' on' : '') + '" data-cb-day="' + d + '"><span>' + wd(d) + '</span><strong>' + Number(d.slice(8)) + '</strong><small>' + mes(d) + '</small></button>').join('');
+  const svc = P.servicos.find(s => s.id === cb.svc);
+  const box = $('#cb-slots');
+  if (!svc || !cb.day) box.innerHTML = '';
+  else {
+    const L = slotsFor(cb.day, svc.min);
+    box.innerHTML = L.length ? L.map(x => '<button type="button" class="slot' + (cb.hora === x.t ? ' on' : '') + '" data-cb-hora="' + x.t + '"' + (x.busy ? ' disabled' : '') + '>' + x.t + '</button>').join('') : '<p class="dim">Sem horários neste dia. Escolha outro dia.</p>';
+  }
+  const resumo = (svc ? '<strong>' + esc(svc.nome) + '</strong> · ' + svc.min + ' min · ' + brl(svc.preco) : 'Serviço não escolhido') + (cb.day ? '<br>' + longDate(cb.day) : '') + (cb.hora ? ' às <strong class="num">' + cb.hora + '</strong>' : '');
+  $('#cb-sum3').innerHTML = resumo;
+  $('#cb-sum4').innerHTML = resumo;
+  $$('#cb-flow .cb-sec').forEach(sec => sec.hidden = sec.dataset.step !== String(cb.step));
+  $$('#cb-steps i').forEach(i => i.classList.toggle('on', Number(i.dataset.n) <= Math.min(cb.step, 4)));
+  $('#cb-steps').hidden = cb.step === 5;
+}
+async function recarregarPublico() {
+  try { const r = await srv('dadosPublicos'); if (r.ok) P = r; } catch (e) { /* mantém */ }
+}
+function calLink(a) {
+  const d = a.data.replace(/-/g, ''), i = a.inicio.replace(':', ''), f = fromMin(toMin(a.inicio) + a.duracao).replace(':', '');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(a.servico + ' - ' + P.nome) + '&dates=' + d + 'T' + i + '00/' + d + 'T' + f + '00&details=' + encodeURIComponent('Código: ' + a.codigo);
+}
+function mostrarConfirmacao(r) {
+  const a = r.ag;
+  cb.codigo = a.codigo; cb.step = 5;
+  $('#cb-sum5').innerHTML = '<strong>' + esc(a.servico) + '</strong><br>' + longDate(a.data) + ' às <strong class="num">' + a.inicio + '</strong><br>' + esc(a.nome) + '<br><span class="dim">Código: </span><strong class="num">' + esc(a.codigo) + '</strong>';
+  const wa = P.whatsapp ? waLink(P.whatsapp, 'Olá! Acabei de agendar ' + a.servico + ' para ' + fmtDate(a.data) + ' às ' + a.inicio + '. Meu nome é ' + a.nome + '. Código ' + a.codigo + '.') : '';
+  $('#cb-wa').hidden = !wa; if (wa) $('#cb-wa').href = wa;
+  $('#cb-cal').href = calLink(a);
+  $('#cb-map').hidden = !P.endereco; if (P.endereco) $('#cb-map').href = mapsLink(P.endereco);
+  $('#cb-cancel-erro').hidden = true;
+  $('#cb-cancel').hidden = false;
+  renderBooking();
+}
+function abrirGerenciar(codigo) {
+  $('#cb-load').hidden = false;
+  srv('consultar', codigo).then(r => {
+    $('#cb-load').hidden = true;
+    $('#cb-manage').hidden = false;
+    if (!r.ok) { $('#mg-title').textContent = 'Não encontrado'; $('#mg-erro').textContent = r.erro; $('#mg-erro').hidden = false; return; }
+    marca(r.nome);
+    renderManage(r);
+  }).catch(() => { $('#cb-load').hidden = true; $('#cb-fail').hidden = false; $('#cb-fail-msg').textContent = 'Não foi possível carregar. Atualize a página.'; });
+}
+let MG = null;
+function renderManage(r) {
+  MG = r;
+  const a = r.ag;
+  $('#mg-title').textContent = a.servico;
+  const pill = $('#mg-pill'); pill.className = 'pill ' + a.status; pill.textContent = LABEL[a.status] || a.status;
+  $('#mg-sum').innerHTML = longDate(a.data) + ' às <strong class="num">' + a.inicio + '</strong> · ' + a.duracao + ' min<br>' + esc(a.nome) + '<br><span class="dim">Código: </span><strong class="num">' + esc(a.codigo) + '</strong>';
+  $('#mg-cancel').hidden = !(a.status === 'agendado' || a.status === 'confirmado');
+  const wa = r.whatsapp ? waLink(r.whatsapp, 'Olá! Sobre meu agendamento ' + a.codigo + ' (' + a.servico + ', ' + fmtDate(a.data) + ' às ' + a.inicio + ').') : '';
+  $('#mg-wa').hidden = !wa; if (wa) $('#mg-wa').href = wa;
+}
+
+$('#booking').addEventListener('click', async e => {
+  const t = e.target;
+  const sv = t.closest('[data-cb-svc]');
+  if (sv) { cb.svc = sv.dataset.cbSvc; cb.hora = null; cb.step = 2; return renderBooking(); }
+  const dy = t.closest('[data-cb-day]');
+  if (dy) { cb.day = dy.dataset.cbDay; cb.hora = null; cb.step = 3; return renderBooking(); }
+  const hr = t.closest('[data-cb-hora]');
+  if (hr) { cb.hora = hr.dataset.cbHora; cb.step = 4; return renderBooking(); }
+  if (t.closest('[data-cb-back]')) { cb.step = Math.max(1, cb.step - 1); return renderBooking(); }
+  if (t.closest('[data-cb-reset]')) { cb = { svc: null, day: null, hora: null, step: 1, codigo: null }; await recarregarPublico(); return renderBooking(); }
+  if (t.closest('#cb-cancel')) {
+    const b = $('#cb-cancel');
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Toque de novo para confirmar o cancelamento'; return; }
+    delete b.dataset.sure; b.textContent = 'Cancelar este horário';
+    let r; try { r = await srv('cancelarCliente', cb.codigo); } catch (er) { r = { erro: 'Não foi possível cancelar agora.' }; }
+    if (r.erro) { $('#cb-cancel-erro').textContent = r.erro; $('#cb-cancel-erro').hidden = false; return; }
+    b.hidden = true;
+    $('#cb-cancel-erro').hidden = true;
+    $('#cb-sum5').innerHTML += '<br><span class="ok-note">Horário cancelado.</span>';
+    return;
+  }
+  if (t.closest('#mg-cancel')) {
+    const b = $('#mg-cancel');
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Toque de novo para confirmar'; return; }
+    delete b.dataset.sure; b.textContent = 'Cancelar este horário';
+    let r; try { r = await srv('cancelarCliente', MG.ag.codigo); } catch (er) { r = { erro: 'Não foi possível cancelar agora.' }; }
+    if (r.erro) { $('#mg-erro').textContent = r.erro; $('#mg-erro').hidden = false; return; }
+    $('#mg-erro').hidden = true;
+    MG.ag = r.ag; renderManage(MG);
+    $('#mg-ok').textContent = 'Horário cancelado.'; $('#mg-ok').hidden = false;
+  }
+});
+$('#form-cli').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, erro = $('#cli-erro'), btn = $('#cli-btn');
+  const svc = P.servicos.find(s => s.id === cb.svc);
+  if (!svc || !cb.day || !cb.hora) { erro.textContent = 'Escolha serviço, dia e horário.'; erro.hidden = false; return; }
+  erro.hidden = true; btn.disabled = true; btn.textContent = 'Reservando…';
+  let r;
+  try {
+    r = await srv('agendar', { servicoId: svc.id, data: cb.day, inicio: cb.hora, nome: f.elements.nome.value, telefone: f.elements.telefone.value, obs: f.elements.obs.value, site: f.elements.site.value, nascimento: f.elements.nascimento.value, origem: ORIGEM });
+  } catch (er) { r = { erro: 'Falha de conexão. Tente de novo.' }; }
+  btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+  if (r.erro) {
+    erro.textContent = r.erro; erro.hidden = false;
+    if (r.recarregar) { await recarregarPublico(); cb.hora = null; cb.step = 3; renderBooking(); }
+    return;
+  }
+  guardarCliente(f.elements.nome.value, f.elements.telefone.value);
+  f.elements.obs.value = '';
+  mostrarConfirmacao(r);
+  recarregarPublico();
+});
+
+/* =====================  ÁREA DA TIELE  ===================== */
+let S = null, poll = null;
+let ui = { view: 'painel', day: null, q: '', editId: null, cf: 'todas', ordem: 'recente' };
+const HPX = 72;
+const svcOf = a => S.servicos.find(s => s.id === a.servicoId);
+const apptsOn = d => S.agenda.filter(a => a.data === d).sort((x, y) => x.inicio.localeCompare(y.inicio));
+const ativas = L => L.filter(a => a.status !== 'cancelado' && a.status !== 'bloqueado');
+async function api(op, p) {
+  const r = await srv('admin', op, p || {});
+  if (r && r.acesso) { acessoNegado(r); throw new Error('acesso'); }
+  return r;
+}
+function mostrarAviso(msg, hint, retry) {
+  document.body.classList.add('entrando');
+  $('#app').hidden = true; $('#bnav').hidden = true;
+  $('#login-msg').textContent = msg;
+  const h = $('#login-hint'); h.hidden = !hint; h.textContent = hint || '';
+  $('#login-retry').hidden = !retry;
+}
+function acessoNegado(r) {
+  clearInterval(poll); S = null;
+  mostrarAviso('Esta área é só da Tiele.', r.conta ? 'Você entrou como ' + r.conta + '. Abra o link da área da Tiele com o Gmail dela.' : 'Abra o link da área da Tiele (o segundo link da instalação) e entre com o Gmail dela.', true);
+}
+async function entrar() {
+  mostrarAviso('Abrindo sua agenda…', '', false);
+  let r;
+  try { r = await srv('admin', 'carregar', {}); } catch (e) { r = { erro: 'Falha de conexão.' }; }
+  if (r.acesso) return acessoNegado(r);
+  if (!r.ok) return mostrarAviso(r.erro || 'Não foi possível abrir a agenda agora.', '', true);
+  S = r; reindex();
+  document.body.classList.remove('entrando');
+  $('#app').hidden = false; $('#bnav').hidden = false;
+  marca(S.cfg.nomeEstudio);
+  ui.day = S.hoje;
+  show('painel');
+  clearInterval(poll);
+  poll = setInterval(atualizar, 45000);
+}
+async function atualizar() {
+  if (document.hidden || !S || !$('#drawer').hidden) return;
+  try {
+    const r = await api('listar', { de: addDays(S.hoje, -1100), ate: addDays(S.hoje, 180) });
+    if (!r.ok) return;
+    if (r.clientes) S.clientes = r.clientes;
+    const antes = new Set(S.agenda.map(a => a.id));
+    const novos = r.agenda.filter(a => !antes.has(a.id) && a.origem === 'site' && a.status !== 'cancelado');
+    S.agenda = r.agenda; reindex();
+    if (novos.length) { const a = novos[0]; toast('Novo agendamento online: ' + a.nome + ', ' + fmtShort(a.data) + ' às ' + a.inicio + (novos.length > 1 ? ' (+' + (novos.length - 1) + ')' : '')); }
+    render();
+  } catch (e) { /* tenta no próximo ciclo */ }
+}
+function upsert(a) { const i = S.agenda.findIndex(x => x.id === a.id); if (i >= 0) S.agenda[i] = a; else S.agenda.push(a); }
+function msgCliente(a) { return 'Olá ' + a.nome + '! Confirmando seu horário de ' + a.servico + ' em ' + fmtDate(a.data) + ' às ' + a.inicio + '. Tudo certo?'; }
+
+function renderStrip() {
+  const ws = weekStart(ui.day);
+  let h = '';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i), n = ativas(apptsOn(d)).length;
+    h += '<button class="sday' + (d === ui.day ? ' on' : '') + (d === S.hoje ? ' today' : '') + '" data-goto="' + d + '"><span>' + wd(d) + '</span><strong>' + Number(d.slice(8)) + '</strong><i class="' + (n ? 'has' : '') + '"></i></button>';
+  }
+  $('#strip').innerHTML = h;
+}
+function renderKpis() {
+  const L = ativas(apptsOn(ui.day));
+  const total = L.reduce((s, a) => s + Number(a.preco || 0), 0);
+  const feito = L.filter(a => a.status === 'concluido').reduce((s, a) => s + Number(a.preco || 0), 0);
+  const conf = L.filter(a => a.status === 'confirmado').length;
+  const busyAt = L.reduce((s, a) => s + a.duracao, 0);
+  const busyAll = apptsOn(ui.day).filter(a => a.status !== 'cancelado').reduce((s, a) => s + a.duracao, 0);
+  const avail = (S.cfg.fim - S.cfg.ini) * 60;
+  const occ = avail ? Math.min(100, Math.round(busyAt / avail * 100)) : 0;
+  const free = Math.max(0, avail - busyAll);
+  const agoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const prox = ui.day === S.hoje ? L.filter(a => toMin(a.inicio) >= agoraMin && a.status !== 'concluido')[0] : L.filter(a => a.status !== 'concluido')[0];
+  $('#kpis').innerHTML =
+    '<div class="card kpi"><span class="l">Atendimentos</span><span class="v num">' + L.length + '</span><span class="s">' + conf + ' confirmado' + (conf === 1 ? '' : 's') + '</span></div>' +
+    '<div class="card kpi"><span class="l">Previsto</span><span class="v num">' + brl(total) + '</span><span class="s">' + brl(feito) + ' concluído</span></div>' +
+    '<div class="card kpi"><span class="l">Próxima</span><span class="v">' + (prox ? esc(prox.nome) : '—') + '</span><span class="s num">' + (prox ? prox.inicio + ' · ' + esc(prox.servico) : 'Nenhuma pendente') + '</span></div>' +
+    '<div class="card kpi"><span class="l">Ocupação</span><span class="v num">' + occ + '%</span><span class="bar"><b style="width:' + occ + '%"></b></span><span class="s num">' + Math.floor(free / 60) + 'h' + pad(free % 60) + ' livres</span></div>';
+}
+function blk(a) {
+  const top = (toMin(a.inicio) - S.cfg.ini * 60) / 60 * HPX;
+  const h = Math.max(a.duracao / 60 * HPX - 4, 30);
+  const q = (ui.q || '').trim().toLowerCase();
+  const dim = q && a.nome.toLowerCase().indexOf(q) < 0 ? ' dim' : '';
+  return '<button class="blk st-' + a.status + dim + '" style="top:' + (top + 2) + 'px;height:' + h + 'px" data-open="' + a.id + '"><span class="blk-t">' + a.inicio + '–' + fromMin(toMin(a.inicio) + a.duracao) + '</span><strong>' + esc(a.nome) + (a.origem === 'site' ? '<span class="tag">Online</span>' : '') + '</strong>' + (h > 58 ? '<span class="blk-s">' + esc(a.servico) + '</span>' : '') + '</button>';
+}
+function renderTimeline() {
+  const ini = S.cfg.ini, fim = S.cfg.fim, H = (fim - ini) * HPX;
+  let hours = '';
+  for (let h = ini; h < fim; h++) hours += '<span style="top:' + (h - ini) * HPX + 'px">' + pad(h) + ':00</span>';
+  const L = apptsOn(ui.day);
+  let now = '';
+  if (ui.day === S.hoje) { const m = new Date().getHours() * 60 + new Date().getMinutes(); if (m >= ini * 60 && m <= fim * 60) now = '<div class="nowline" style="top:' + (m - ini * 60) / 60 * HPX + 'px"></div>'; }
+  $('#tl').innerHTML = '<div class="tl-hours" style="height:' + H + 'px">' + hours + '</div><div class="tl-body" id="tl-body" style="height:' + H + 'px;--hpx:' + HPX + 'px">' + L.map(blk).join('') + now + (L.length ? '' : '<div class="tl-empty">Dia livre. Clique em um horário para agendar.</div>') + '</div>';
+}
+function renderDayList() {
+  const L = apptsOn(ui.day);
+  $('#list-count').textContent = L.length ? L.length : '';
+  $('#day-list').innerHTML = L.length ? L.map(a => {
+    const wa = a.telefone && a.status !== 'bloqueado' ? waLink(a.telefone, msgCliente(a)) : '';
+    let acts = '';
+    if (a.status !== 'cancelado' && a.status !== 'bloqueado') {
+      acts = '<div class="acts">' + (a.status === 'agendado' ? '<button type="button" class="ok" data-q="confirmar" data-id="' + a.id + '">Confirmar</button>' : '') +
+        (a.status !== 'concluido' ? '<button type="button" data-q="concluir" data-id="' + a.id + '">Concluir</button>' : '') +
+        (wa ? '<a class="go" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div>';
+    }
+    return '<div class="lc' + (a.status === 'cancelado' ? ' cancel' : '') + '"><span class="t">' + a.inicio + '</span><div class="b" data-open="' + a.id + '" style="cursor:pointer;min-width:0;flex:1;display:flex;flex-direction:column;gap:2px"><strong>' + esc(a.nome) + (a.origem === 'site' ? '<span class="tag">Online</span>' : '') + '</strong><span>' + esc(a.servico) + (a.status === 'bloqueado' ? '' : ' · ' + brl(a.preco)) + '</span>' + acts + '</div><span class="pill ' + a.status + '" style="align-self:flex-start">' + LABEL[a.status] + '</span></div>';
+  }).join('') : '<div class="empty">Nenhum atendimento neste dia.</div>';
+}
+function renderLembretes() {
+  const box = $('#lembretes');
+  const amanha = addDays(S.hoje, 1);
+  const L = ui.day === S.hoje ? ativas(apptsOn(amanha)).filter(a => a.telefone && a.status !== 'concluido') : [];
+  if (!L.length) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = '<div class="lemb-h"><h3>Lembretes de amanhã</h3><span class="muted">' + L.length + ' cliente' + (L.length === 1 ? '' : 's') + ' · toque para avisar no WhatsApp</span></div><div class="lemb-l">' +
+    L.map(a => '<a class="lemb-i" href="' + waLink(a.telefone, 'Oi ' + a.nome.split(' ')[0] + '! Passando para lembrar do seu horário amanhã, ' + fmtShort(a.data) + ', às ' + a.inicio + ' (' + a.servico + '). Posso confirmar?') + '" target="_blank" rel="noopener"><span class="num">' + a.inicio + '</span><strong>' + esc(a.nome) + '</strong><span class="muted">' + esc(a.servico) + '</span><em>Lembrar</em></a>').join('') + '</div>';
+}
+/* ---------- CRM: índice, painel, clientes, funil, campanhas, ficha ---------- */
+const diffDias = (a, b) => Math.round((parse(a) - parse(b)) / 86400000);
+const ESTAGIOS = [
+  ['lead', 'Lead', 'Contato que ainda não agendou'],
+  ['agendada', 'Agendada', 'Primeiro horário marcado'],
+  ['cliente', 'Cliente', 'Já foi atendida'],
+  ['recorrente', 'Recorrente', '3 ou mais atendimentos'],
+  ['inativa', 'Inativa', 'Sem voltar há mais de 60 dias']
+];
+const ESTAGIO_NOME = {}; ESTAGIOS.forEach(e => ESTAGIO_NOME[e[0]] = e[1]);
+const ORIGEM_NOME = { instagram: 'Instagram', whatsapp: 'WhatsApp', indicacao: 'Indicação', site: 'Link de agendamento', google: 'Google', outro: 'Outro', '': 'Sem origem' };
+const PAG_NOME = { pix: 'Pix', cartao: 'Cartão', dinheiro: 'Dinheiro', '': 'Não informado' };
+const TIPO_NOME = { nota: 'Nota', whatsapp: 'WhatsApp', ligacao: 'Ligação', campanha: 'Campanha', brinde: 'Brinde' };
+const brlK = v => v >= 1000 ? 'R$ ' + (v / 1000).toFixed(1).replace('.', ',') + ' mil' : 'R$ ' + Math.round(v);
+const primeiro = n => String(n || '').split(' ')[0];
+const listaX = () => Object.keys(S.cx).map(k => S.cx[k]);
+
+function reindex() {
+  const hoje = S.hoje, cada = Number(S.cfg.fidelidadeCada) || 0;
+  const X = {}, porFone = {};
+  S.clientes.forEach(c => { X[c.id] = { c: c, feitos: 0, gasto: 0, ultima: '', primeira: '', proxima: '', datas: [], ags: [] }; if (c.telefone) porFone[c.telefone] = c.id; });
+  S.agenda.forEach(a => {
+    if (a.status === 'bloqueado') return;
+    const id = (a.clienteId && X[a.clienteId]) ? a.clienteId : (a.telefone ? porFone[a.telefone] : '');
+    if (!id) return;
+    const x = X[id]; x.ags.push(a);
+    if (a.status === 'concluido') {
+      x.feitos++; x.gasto += Number(a.preco || 0); x.datas.push(a.data);
+      if (!x.ultima || a.data > x.ultima) x.ultima = a.data;
+      if (!x.primeira || a.data < x.primeira) x.primeira = a.data;
+    } else if ((a.status === 'agendado' || a.status === 'confirmado') && a.data >= hoje && (!x.proxima || a.data < x.proxima)) x.proxima = a.data;
+  });
+  Object.keys(X).forEach(id => {
+    const x = X[id], c = x.c;
+    x.ags.sort((p, q) => (q.data + q.inicio).localeCompare(p.data + p.inicio));
+    x.ticket = x.feitos ? x.gasto / x.feitos : 0;
+    x.dias = x.ultima ? diffDias(hoje, x.ultima) : null;
+    let iv = 30;
+    if (x.datas.length >= 2) { const d = x.datas.slice().sort(); iv = Math.max(14, Math.min(75, Math.round(diffDias(d[d.length - 1], d[0]) / (d.length - 1)))); }
+    x.intervalo = iv;
+    x.retorno = x.ultima ? addDays(x.ultima, iv) : '';
+    if (x.feitos === 0) x.estagio = x.proxima ? 'agendada' : 'lead';
+    else if (!x.proxima && x.dias > 60) x.estagio = 'inativa';
+    else if (x.feitos >= 3) x.estagio = 'recorrente';
+    else x.estagio = 'cliente';
+    const resg = Number(c.resgates) || 0;
+    x.disp = cada ? Math.max(0, Math.floor(x.feitos / cada) - resg) : 0;
+    x.carimbos = cada ? Math.min(cada, Math.max(0, x.feitos - resg * cada)) : 0;
+    x.aniv = null;
+    if (c.nascimento) {
+      const md = c.nascimento.slice(-5), ano = Number(hoje.slice(0, 4));
+      let d = ano + '-' + md; if (d < hoje) d = (ano + 1) + '-' + md;
+      x.aniv = diffDias(d, hoje);
+    }
+  });
+  S.cx = X;
+}
+const xOf = id => (S.cx || {})[id];
+
+function camps() {
+  const L = listaX().filter(x => x.c.telefone);
+  const rec = (x, n) => x.c.ultimoContato && diffDias(S.hoje, x.c.ultimoContato) < n;
+  const url = S.cfg.urlCliente ? ' ' + S.cfg.urlCliente : '';
+  const I = (x, nota, msg) => ({ x: x, nota: nota, msg: msg });
+  return [
+    { id: 'niver', titulo: 'Aniversariantes', desc: 'Hoje e nos próximos 7 dias.', cor: 'accent',
+      itens: L.filter(x => x.aniv !== null && x.aniv <= 7 && !rec(x, 3)).sort((a, b) => a.aniv - b.aniv)
+        .map(x => I(x, x.aniv === 0 ? 'Hoje!' : 'em ' + x.aniv + ' dia' + (x.aniv === 1 ? '' : 's'), 'Feliz aniversário, ' + primeiro(x.c.nome) + '! 🎉💅 Quero comemorar com você. Me chama para marcar um horário especial!' + url)) },
+    { id: 'retorno', titulo: 'Hora de voltar', desc: 'Pelo ritmo de cada uma, o retorno está chegando.', cor: 'info',
+      itens: L.filter(x => x.feitos >= 1 && !x.proxima && x.dias < 45 && x.retorno <= addDays(S.hoje, 5) && !rec(x, 10)).sort((a, b) => a.retorno.localeCompare(b.retorno))
+        .map(x => I(x, 'a cada ~' + x.intervalo + ' dias · última há ' + x.dias + 'd', 'Oi ' + primeiro(x.c.nome) + '! Já está chegando a hora de renovar suas unhas 💅 Tenho horários essa semana. Quer que eu reserve um para você?' + url)) },
+    { id: 'sumidas', titulo: 'Reativar quem sumiu', desc: 'Sem voltar há 45 dias ou mais e sem horário marcado.', cor: 'warn',
+      itens: L.filter(x => x.feitos >= 1 && !x.proxima && x.dias >= 45 && !rec(x, 14)).sort((a, b) => b.dias - a.dias)
+        .map(x => I(x, 'há ' + x.dias + ' dias', 'Oi ' + primeiro(x.c.nome) + '! Tudo bem? Faz um tempinho que não te vejo por aqui e estou com saudade 💕 Vamos marcar um horário?' + url)) },
+    { id: 'pos', titulo: 'Pós-atendimento', desc: 'Atendidas ontem ou hoje: peça uma opinião e sugira a manutenção.', cor: 'ok',
+      itens: L.filter(x => x.ultima && x.dias <= 1 && !x.proxima && (!x.c.ultimoContato || x.c.ultimoContato < x.ultima))
+        .map(x => I(x, x.dias === 0 ? 'hoje' : 'ontem', 'Oi ' + primeiro(x.c.nome) + '! Ficou bem com as unhas? 💅 Se puder, me manda uma foto e conta o que achou. Já posso reservar sua próxima manutenção?' + url)) },
+    { id: 'brinde', titulo: 'Brinde de fidelidade', desc: 'Já completaram os atendimentos do programa.', cor: 'accent',
+      itens: L.filter(x => x.disp > 0 && !rec(x, 7))
+        .map(x => I(x, S.cfg.fidelidadeBrinde, 'Oi ' + primeiro(x.c.nome) + '! Você completou ' + S.cfg.fidelidadeCada + ' atendimentos e ganhou um presente: ' + S.cfg.fidelidadeBrinde + ' 🎁 Quando quer usar?' + url)) },
+    { id: 'leads', titulo: 'Leads sem agendamento', desc: 'Contatos que ainda não marcaram horário.', cor: 'info',
+      itens: L.filter(x => x.estagio === 'lead' && !rec(x, 7) && x.c.criadoEm && diffDias(S.hoje, x.c.criadoEm.slice(0, 10)) >= 1)
+        .map(x => I(x, 'contato há ' + diffDias(S.hoje, x.c.criadoEm.slice(0, 10)) + ' dias', 'Oi ' + primeiro(x.c.nome) + '! Aqui é do ' + S.cfg.nomeEstudio + '. Posso te ajudar a escolher um horário? É rapidinho pelo link:' + url)) }
+  ];
+}
+
+function hbars(rows, fmt) {
+  const max = Math.max.apply(null, rows.map(r => r.v).concat([1]));
+  return rows.length ? rows.map(r => '<div class="hb"><span class="hl">' + esc(r.l) + '</span><div class="ht"><b style="width:' + Math.max(3, Math.round(r.v / max * 100)) + '%"></b></div><span class="hv num">' + (fmt ? fmt(r) : r.v) + '</span></div>').join('') : '<p class="hint">Sem dados ainda.</p>';
+}
+
+function renderPainel() {
+  const hoje = S.hoje, mk = hoje.slice(0, 7);
+  $('#page-sub').textContent = cap(parse(hoje).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+  const conc = S.agenda.filter(a => a.status === 'concluido');
+  const doMes = conc.filter(a => a.data.slice(0, 7) === mk);
+  const feito = doMes.reduce((t, a) => t + Number(a.preco || 0), 0);
+  const prev = S.agenda.filter(a => (a.status === 'agendado' || a.status === 'confirmado') && a.data >= hoje && a.data.slice(0, 7) === mk).reduce((t, a) => t + Number(a.preco || 0), 0);
+  const X = listaX();
+  const ativas = X.filter(x => (x.dias !== null && x.dias <= 90) || x.proxima).length;
+  const base = X.filter(x => x.feitos >= 1).length, voltaram = X.filter(x => x.feitos >= 2).length;
+  const novas = S.clientes.filter(c => (c.criadoEm || '').slice(0, 7) === mk).length;
+  $('#pn-kpis').innerHTML =
+    '<div class="card kpi"><span class="l">Faturado no mês</span><span class="v num">' + brl(feito) + '</span><span class="s">' + doMes.length + ' atendimento' + (doMes.length === 1 ? '' : 's') + ' concluído' + (doMes.length === 1 ? '' : 's') + '</span></div>' +
+    '<div class="card kpi"><span class="l">Ticket médio</span><span class="v num">' + brl(doMes.length ? feito / doMes.length : 0) + '</span><span class="s">por atendimento no mês</span></div>' +
+    '<div class="card kpi"><span class="l">Clientes ativas</span><span class="v num">' + ativas + '</span><span class="s">' + novas + ' nova' + (novas === 1 ? '' : 's') + ' neste mês</span></div>' +
+    '<div class="card kpi"><span class="l">Taxa de retorno</span><span class="v num">' + (base ? Math.round(voltaram / base * 100) : 0) + '%</span><span class="s">' + voltaram + ' de ' + base + ' voltaram</span></div>';
+  const meta = Number(S.cfg.metaMensal) || 0;
+  if (meta > 0) {
+    const pf = Math.min(100, Math.round(feito / meta * 100)), pp = Math.min(100 - pf, Math.round(prev / meta * 100));
+    const falta = Math.max(0, meta - feito);
+    $('#pn-meta').innerHTML = '<div class="meta-h"><div><p class="kicker">Meta do mês</p><strong class="num">' + brl(feito) + '</strong> <span class="dim">de ' + brl(meta) + '</span></div><span class="meta-p num">' + pf + '%</span></div><div class="meta-bar"><b style="width:' + pf + '%"></b><i style="width:' + pp + '%"></i></div><p class="hint">' + (falta > 0 ? 'Faltam ' + brl(falta) + '. Já tem ' + brl(prev) + ' agendados até o fim do mês.' : 'Meta batida. Parabéns!') + '</p>';
+  } else {
+    $('#pn-meta').innerHTML = '<div class="meta-h"><div><p class="kicker">Meta do mês</p><span class="dim">Defina quanto quer faturar e acompanhe aqui.</span></div><button class="btn" data-view="ajustes">Definir meta</button></div>';
+  }
+  const meses = [];
+  for (let i = 5; i >= 0; i--) { const d = parse(mk + '-01'); d.setMonth(d.getMonth() - i); meses.push(ymd(d).slice(0, 7)); }
+  const vals = meses.map(m => conc.filter(a => a.data.slice(0, 7) === m).reduce((t, a) => t + Number(a.preco || 0), 0));
+  const vmax = Math.max.apply(null, vals.concat([1]));
+  $('#pn-fat').innerHTML = '<div class="bars">' + meses.map((m, i) => '<div class="bar-c' + (m === mk ? ' cur' : '') + '"><span class="bv num">' + (vals[i] ? brlK(vals[i]) : '—') + '</span><div class="bcol"><b style="height:' + Math.max(vals[i] ? 4 : 0, Math.round(vals[i] / vmax * 100)) + '%"></b></div><span class="bl">' + mes(m + '-01') + '</span></div>').join('') + '</div>';
+  const desde = addDays(hoje, -90), porSvc = {};
+  conc.filter(a => a.data >= desde).forEach(a => { const o = porSvc[a.servico] || (porSvc[a.servico] = { l: a.servico, v: 0, r: 0 }); o.v++; o.r += Number(a.preco || 0); });
+  $('#pn-svc').innerHTML = hbars(Object.keys(porSvc).map(k => porSvc[k]).sort((a, b) => b.v - a.v).slice(0, 6), r => r.v + 'x · ' + brl(r.r));
+  const porOr = {};
+  S.clientes.forEach(c => { const k = c.origem || ''; porOr[k] = (porOr[k] || 0) + 1; });
+  const totC = S.clientes.length || 1;
+  $('#pn-orig').innerHTML = hbars(Object.keys(porOr).map(k => ({ l: ORIGEM_NOME[k] || k, v: porOr[k] })).sort((a, b) => b.v - a.v), r => r.v + ' · ' + Math.round(r.v / totC * 100) + '%');
+  const porPg = {};
+  doMes.forEach(a => { const k = a.pagamento || ''; porPg[k] = (porPg[k] || 0) + Number(a.preco || 0); });
+  $('#pn-pag').innerHTML = hbars(Object.keys(porPg).map(k => ({ l: PAG_NOME[k], v: porPg[k] })).sort((a, b) => b.v - a.v), r => brl(r.v));
+  $('#pn-top').innerHTML = X.filter(x => x.gasto > 0).sort((a, b) => b.gasto - a.gasto).slice(0, 5).map((x, i) => '<button class="top-i" data-ficha="' + x.c.id + '"><span class="top-n num">' + (i + 1) + '</span><span class="top-t"><strong>' + esc(x.c.nome) + '</strong><span class="muted">' + x.feitos + ' atendimento' + (x.feitos === 1 ? '' : 's') + ' · ticket ' + brl(x.ticket) + '</span></span><b class="num">' + brl(x.gasto) + '</b></button>').join('') || '<p class="hint">Conclua atendimentos para ver o ranking.</p>';
+  const C = camps().filter(c => c.itens.length);
+  $('#pn-acoes').innerHTML = C.length ? C.map(c => '<button class="acao-i" data-view="campanhas"><span class="dot ' + c.cor + '"></span><span>' + esc(c.titulo) + '</span><b class="num">' + c.itens.length + '</b></button>').join('') : '<p class="hint">Tudo em dia. Nenhuma cliente pedindo atenção agora.</p>';
+}
+
+const FILTROS = [['todas', 'Todas']].concat(ESTAGIOS.map(e => [e[0], e[1]])).concat([['niver', 'Aniversariantes']]);
+function filtraClientes() {
+  const q = ($('#q').value || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
+  return listaX().filter(x => {
+    if (q && x.c.nome.toLowerCase().indexOf(q) < 0 && !(qd && (x.c.telefone || '').indexOf(qd) >= 0) && (x.c.tags || '').toLowerCase().indexOf(q) < 0 && (x.c.instagram || '').toLowerCase().indexOf(q.replace('@', '')) < 0) return false;
+    return true;
+  });
+}
+function renderClientes() {
+  const X = filtraClientes();
+  $('#page-sub').textContent = S.clientes.length + ' cliente' + (S.clientes.length === 1 ? '' : 's') + ' no CRM';
+  const mk = S.hoje.slice(0, 7);
+  const total = listaX().reduce((t, x) => t + x.gasto, 0);
+  const sumidas = listaX().filter(x => x.estagio === 'inativa').length;
+  $('#cl-resumo').innerHTML = '<div class="card kpi"><span class="l">Clientes</span><span class="v num">' + S.clientes.length + '</span><span class="s">' + S.clientes.filter(c => (c.criadoEm || '').slice(0, 7) === mk).length + ' nova(s) neste mês</span></div>' +
+    '<div class="card kpi"><span class="l">Valor de todas as clientes</span><span class="v num">' + brl(total) + '</span><span class="s">atendimentos concluídos até hoje</span></div>' +
+    '<div class="card kpi"><span class="l">Inativas</span><span class="v num">' + sumidas + '</span><span class="s">sem voltar há mais de 60 dias</span></div>';
+  const cont = f => f === 'todas' ? X.length : f === 'niver' ? X.filter(x => x.aniv !== null && x.aniv <= 30).length : X.filter(x => x.estagio === f).length;
+  $('#cl-filtros').innerHTML = FILTROS.map(f => '<button class="chip' + (ui.cf === f[0] ? ' on' : '') + '" data-filtro="' + f[0] + '">' + f[1] + ' <b class="num">' + cont(f[0]) + '</b></button>').join('');
+  let L = X.filter(x => ui.cf === 'todas' || (ui.cf === 'niver' ? (x.aniv !== null && x.aniv <= 30) : x.estagio === ui.cf));
+  const o = ui.ordem;
+  L.sort((a, b) => o === 'gasto' ? b.gasto - a.gasto : o === 'visitas' ? b.feitos - a.feitos : o === 'nome' ? a.c.nome.localeCompare(b.c.nome, 'pt-BR') : o === 'sumida' ? (b.dias === null ? -1 : b.dias) - (a.dias === null ? -1 : a.dias) : (b.proxima || b.ultima || b.c.criadoEm || '').localeCompare(a.proxima || a.ultima || a.c.criadoEm || ''));
+  $('#cl-list').innerHTML = L.length ? L.map(x => {
+    const c = x.c, wa = c.telefone ? waLink(c.telefone, 'Oi ' + primeiro(c.nome) + '! Tudo bem?') : '';
+    const tags = (c.tags || '').split(',').filter(Boolean).map(t => '<span class="tg">' + esc(t) + '</span>').join('');
+    return '<div class="card cl-i" data-ficha="' + c.id + '"><div class="cl-n"><strong>' + esc(c.nome) + '</strong><span class="muted">' + (c.telefone ? fmtFone(c.telefone) : 'sem WhatsApp') + (c.instagram ? ' · @' + esc(c.instagram) : '') + '</span>' + (tags ? '<span class="tgs">' + tags + '</span>' : '') + '</div>' +
+      '<div class="cl-m"><span><b class="num">' + x.feitos + '</b> atendimento' + (x.feitos === 1 ? '' : 's') + '</span><span><b class="num">' + brl(x.gasto) + '</b> no total</span><span>' + (x.proxima ? 'Próxima: <b class="num">' + fmtShort(x.proxima) + '</b>' : (x.ultima ? 'Última: <b class="num">' + fmtShort(x.ultima) + '</b>' : 'Sem atendimento')) + '</span></div>' +
+      '<div class="cl-a">' + (x.disp ? '<span class="pill brinde">Brinde</span>' : '') + (x.aniv !== null && x.aniv <= 7 ? '<span class="pill brinde">' + (x.aniv === 0 ? 'Aniversário hoje' : 'Niver em ' + x.aniv + 'd') + '</span>' : '') + '<span class="pill ' + x.estagio + '">' + ESTAGIO_NOME[x.estagio] + '</span>' + (wa ? '<a class="btn" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div></div>';
+  }).join('') : '<div class="empty">Nenhuma cliente neste filtro.</div>';
+  $('#cl-ordem').value = ui.ordem;
+}
+
+function renderFunil() {
+  const X = filtraClientes();
+  $('#page-sub').textContent = 'Da primeira conversa à cliente fiel';
+  $('#funil').innerHTML = ESTAGIOS.map(e => {
+    const L = X.filter(x => x.estagio === e[0]).sort((a, b) => (b.proxima || b.ultima || b.c.criadoEm || '').localeCompare(a.proxima || a.ultima || a.c.criadoEm || ''));
+    const soma = L.reduce((t, x) => t + x.gasto, 0);
+    return '<div class="fcol f-' + e[0] + '"><div class="fh"><div><strong>' + e[1] + '</strong><span class="muted">' + e[2] + '</span></div><b class="num">' + L.length + '</b></div>' +
+      (soma ? '<span class="fsum num">' + brl(soma) + ' faturados</span>' : '') +
+      '<div class="fcards">' + (L.map(x => '<button class="fcard" data-ficha="' + x.c.id + '"><strong>' + esc(x.c.nome) + '</strong><span class="muted">' + (x.proxima ? 'Próxima: ' + fmtShort(x.proxima) : x.ultima ? 'Última: ' + fmtShort(x.ultima) + ' · ' + x.dias + 'd' : 'Cadastrada em ' + fmtShort((x.c.criadoEm || S.hoje).slice(0, 10))) + '</span>' + (x.gasto ? '<span class="num fv">' + brl(x.gasto) + '</span>' : '') + '</button>').join('') || '<p class="wempty">Ninguém aqui</p>') + '</div></div>';
+  }).join('');
+}
+
+function renderCampanhas() {
+  const C = camps();
+  $('#page-sub').textContent = 'Relacionamento pelo WhatsApp';
+  $('#camps').innerHTML = C.map(c => '<div class="card camp"><div class="camp-h"><div><span class="dot ' + c.cor + '"></span><strong>' + esc(c.titulo) + '</strong><p class="muted">' + esc(c.desc) + '</p></div><b class="camp-n num">' + c.itens.length + '</b></div>' +
+    (c.itens.length ? c.itens.slice(0, 12).map(i => '<div class="camp-i"><button class="camp-c" data-ficha="' + i.x.c.id + '"><strong>' + esc(i.x.c.nome) + '</strong><span class="muted">' + esc(i.nota) + '</span></button><a class="btn accent" data-camp="' + c.id + '" data-cid="' + i.x.c.id + '" href="' + waLink(i.x.c.telefone, i.msg) + '" target="_blank" rel="noopener">Enviar</a></div>').join('') + (c.itens.length > 12 ? '<p class="hint">+ ' + (c.itens.length - 12) + ' no mesmo grupo. Envie estas e a lista se renova.</p>' : '') : '<p class="hint">Ninguém nesta lista agora.</p>') + '</div>').join('');
+}
+
+function atualizaBadge() {
+  const n = camps().reduce((t, c) => t + c.itens.length, 0);
+  ['#nb-camp'].forEach(s => { const b = $(s); b.hidden = !n; b.textContent = n; });
+  const m = $('#bnav [data-view="campanhas"]'); if (m) m.dataset.n = n || '';
+}
+
+/* ---- ficha da cliente ---- */
+let fichaId = null;
+function fichaFid(x) {
+  const cada = Number(S.cfg.fidelidadeCada) || 0;
+  if (!cada || !x) return '<p class="hint">Programa de fidelidade desligado. Ligue nos Ajustes.</p>';
+  let s = '';
+  for (let i = 0; i < cada; i++) s += '<i class="' + (i < x.carimbos ? 'on' : '') + '"></i>';
+  return '<div class="stamps">' + s + '</div><div class="fid-r"><span>' + (x.disp ? '<b class="ok-note">Brinde disponível: ' + esc(S.cfg.fidelidadeBrinde) + '</b>' : x.carimbos + ' de ' + cada + ' atendimentos · prêmio: ' + esc(S.cfg.fidelidadeBrinde)) + '</span>' + (x.disp ? '<button type="button" class="btn accent" data-brinde="' + x.c.id + '">Resgatar</button>' : '') + '</div>';
+}
+function fichaTl(id) {
+  const L = S.interacoes.filter(i => i.clienteId === id).sort((a, b) => b.data.localeCompare(a.data));
+  $('#fch-tl').innerHTML = L.length ? L.map(i => '<div class="tli"><span class="tli-t">' + esc(TIPO_NOME[i.tipo] || i.tipo) + '</span><div><p>' + esc(i.texto) + '</p><span class="muted">' + fmtShort(i.data.slice(0, 10)) + ' às ' + i.data.slice(11, 16) + '</span></div></div>').join('') : '<p class="hint">Nada registrado ainda. Anote preferências, conversas e combinados.</p>';
+}
+function abrirFicha(id) {
+  fichaId = id || null;
+  const x = id ? xOf(id) : null, c = x ? x.c : { nome: '', telefone: '', nascimento: '', instagram: '', origem: '', tags: '', notas: '' };
+  const wa = c.telefone ? waLink(c.telefone, 'Oi ' + primeiro(c.nome) + '! Tudo bem?') : '';
+  const sel = ['', 'instagram', 'whatsapp', 'indicacao', 'site', 'google', 'outro'].map(o => '<option value="' + o + '"' + (c.origem === o ? ' selected' : '') + '>' + (o ? ORIGEM_NOME[o] : '—') + '</option>').join('');
+  const nasc = /^\d{4}-\d{2}-\d{2}$/.test(c.nascimento || '') ? c.nascimento : '';
+  $('#ficha').innerHTML = '<form id="form-ficha" class="fch" autocomplete="off"><div class="dh"><div><p class="kicker">' + (x ? '<span class="pill ' + x.estagio + '">' + ESTAGIO_NOME[x.estagio] + '</span>' : 'Nova cliente') + '</p><h2>' + esc(c.nome || 'Cliente') + '</h2></div><button type="button" class="ic" data-fechar-ficha aria-label="Fechar">✕</button></div>' +
+    '<div class="dbody">' +
+    (x ? '<div class="fk"><div><span class="l">Atendimentos</span><b class="num">' + x.feitos + '</b></div><div><span class="l">Total gasto</span><b class="num">' + brl(x.gasto) + '</b></div><div><span class="l">Ticket médio</span><b class="num">' + brl(x.ticket) + '</b></div><div><span class="l">' + (x.proxima ? 'Próxima' : 'Retorno previsto') + '</span><b class="num">' + (x.proxima ? fmtShort(x.proxima) : x.retorno ? fmtShort(x.retorno) : '—') + '</b></div></div>' +
+      '<div class="fid" id="fch-fid">' + fichaFid(x) + '</div>' : '') +
+    '<div class="row2"><label class="field">Nome<input type="text" name="nome" required maxlength="60" value="' + esc(c.nome) + '"></label><label class="field">WhatsApp<input type="tel" name="telefone" placeholder="11 91234-5678" value="' + esc(fmtFone(c.telefone)) + '"></label></div>' +
+    '<div class="row2"><label class="field">Aniversário<input type="date" name="nascimento" value="' + esc(nasc) + '"></label><label class="field">Instagram<input type="text" name="instagram" maxlength="40" placeholder="@usuario" value="' + (c.instagram ? '@' + esc(c.instagram) : '') + '"></label></div>' +
+    '<div class="row2"><label class="field">Como conheceu<select name="origem">' + sel + '</select></label><label class="field">Etiquetas<input type="text" name="tags" maxlength="80" placeholder="vip, noiva, gel" value="' + esc(c.tags) + '"></label></div>' +
+    '<label class="field">Anotações<textarea name="notas" rows="3" maxlength="1000" placeholder="Cores favoritas, alergias, formato da unha, assunto preferido…">' + esc(c.notas) + '</textarea></label>' +
+    '<p class="erro" id="fch-erro" hidden></p>' +
+    (x ? '<div><h3 class="fch-h">Histórico de atendimentos</h3><div class="hist">' + (x.ags.length ? x.ags.slice(0, 15).map(a => '<button type="button" class="hist-i" data-open="' + a.id + '"><span class="num">' + fmtDate(a.data) + '</span><span>' + esc(a.servico) + '</span><b class="num">' + brl(a.preco) + '</b><span class="pill ' + a.status + '">' + LABEL[a.status] + '</span></button>').join('') : '<p class="hint">Nenhum atendimento ainda.</p>') + '</div></div>' +
+      '<div><h3 class="fch-h">Relacionamento</h3><div class="int-add"><select id="int-tipo"><option value="nota">Nota</option><option value="whatsapp">Conversa no WhatsApp</option><option value="ligacao">Ligação</option></select><input type="text" id="int-txt" maxlength="500" placeholder="O que aconteceu?"><button type="button" class="btn" data-add-int>Registrar</button></div><div class="tl2" id="fch-tl"></div></div>' : '') +
+    '</div><div class="df"><div class="grp">' + (wa ? '<a class="btn ghost" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + (x ? '<button type="button" class="btn ghost" data-agendar-cli="' + c.id + '">Agendar</button><button type="button" class="btn ghost danger" data-arquivar="' + c.id + '">Arquivar</button>' : '') + '</div><div class="grp"><button type="button" class="btn ghost" data-fechar-ficha>Voltar</button><button type="submit" class="btn accent">Salvar</button></div></div></form>';
+  if (x) fichaTl(id);
+  $('#cdrawer').hidden = false;
+  if (!x) setTimeout(() => $('#form-ficha').elements.nome.focus(), 60);
+}
+function fecharFicha() { $('#cdrawer').hidden = true; fichaId = null; }
+function sincCliente(c) {
+  const i = S.clientes.findIndex(x => x.id === c.id);
+  if (i >= 0) S.clientes[i] = c; else S.clientes.push(c);
+}
+
+function renderDia() {
+  $('#page-sub').textContent = longDate(ui.day);
+  $('#day-title').textContent = ui.day === S.hoje ? 'Hoje' : fmtDate(ui.day);
+  renderStrip(); renderKpis(); renderLembretes(); renderTimeline(); renderDayList();
+}
+function renderSemana() {
+  const ws = weekStart(ui.day);
+  $('#page-sub').textContent = fmtShort(ws) + ' a ' + fmtShort(addDays(ws, 6));
+  $('#week-label').textContent = fmtShort(ws) + ' – ' + fmtShort(addDays(ws, 6));
+  let h = '';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i), L = apptsOn(d);
+    h += '<div class="wcol' + (d === S.hoje ? ' today' : '') + '"><button class="whead" data-goto="' + d + '"><span>' + wd(d) + '</span><strong>' + Number(d.slice(8)) + '</strong></button>' + (L.length ? L.map(a => '<button class="wcard st-' + a.status + '" data-open="' + a.id + '"><b>' + a.inicio + '</b><span>' + esc(a.nome) + '</span></button>').join('') : '<p class="wempty">Livre</p>') + '</div>';
+  }
+  $('#week-grid').innerHTML = h;
+}
+function renderServicos() {
+  const L = S.servicos.filter(s => s.ativo !== 'nao');
+  $('#page-sub').textContent = L.length + ' serviço' + (L.length === 1 ? '' : 's') + ' no ar';
+  $('#svc-grid').innerHTML = L.length ? L.map(s => '<div class="card svc"><span class="n">' + esc(s.nome) + '</span><div class="meta"><span class="num">' + s.min + ' min</span></div><div class="foot"><span class="price num">' + brl(s.preco) + '</span><span style="display:flex;gap:6px"><button class="btn ghost" data-svc-edit="' + esc(s.id) + '">Editar</button><button class="btn ghost danger" data-svc-del="' + esc(s.id) + '">Remover</button></span></div></div>').join('') : '<div class="empty" style="grid-column:1/-1">Cadastre o primeiro serviço acima.</div>';
+}
+const DIAS_NOME = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+function renderAjustes() {
+  $('#page-sub').textContent = 'Configurações';
+  const f = $('#form-cfg'), c = S.cfg;
+  if (!f.dataset.pronto) {
+    $('#dias-box').innerHTML = DIAS_NOME.map((n, i) => '<label><input type="checkbox" value="' + i + '">' + n + '</label>').join('');
+    f.dataset.pronto = '1';
+  }
+  f.elements.nomeEstudio.value = c.nomeEstudio;
+  f.elements.whatsapp.value = c.whatsapp ? fmtFone(c.whatsapp) : '';
+  f.elements.endereco.value = c.endereco || ''; f.elements.instagram.value = c.instagram ? '@' + c.instagram : ''; f.elements.urlCliente.value = c.urlCliente || '';
+  f.elements.ini.value = c.ini; f.elements.fim.value = c.fim; f.elements.passo.value = String(c.passo);
+  f.elements.antecedenciaMin.value = c.antecedenciaMin; f.elements.maxDias.value = c.maxDias; f.elements.cancelarH.value = Math.round(c.cancelarMin / 60);
+  f.elements.metaMensal.value = c.metaMensal || ''; f.elements.fidelidadeCada.value = c.fidelidadeCada; f.elements.fidelidadeBrinde.value = c.fidelidadeBrinde || '';
+  $$('#dias-box input').forEach(i => i.checked = c.dias.indexOf(Number(i.value)) >= 0);
+  const base = c.urlCliente || '';
+  $('#link-cli').value = base || 'Abra o link das clientes uma vez para ele aparecer aqui';
+  $('#link-orig').innerHTML = base ? [['instagram', 'Instagram (bio)'], ['whatsapp', 'WhatsApp (saudação)'], ['indicacao', 'Indicação']].map(o => { const u = base + '?o=' + o[0]; return '<div class="linkrow"><span class="lo-n">' + o[1] + '</span><input type="text" readonly value="' + esc(u) + '"><button type="button" class="btn" data-copiar-orig="' + esc(u) + '">Copiar</button></div>'; }).join('') : '<p class="hint">Abra o link das clientes uma vez (ou cole no campo acima) para gerar os links por origem.</p>';
+  $('#link-adm').value = S.urlAdmin ? S.urlAdmin + '?page=admin' : '';
+  $('#txt-ig').value = 'Agende seu horário 💅 Link na bio';
+  $('#txt-wa').value = 'Olá! 💅 Aqui é do ' + c.nomeEstudio + '. Para agendar é rápido: escolha o serviço, o dia e o horário neste link e já fica reservado (só aparecem dias e horários livres): ' + (base ? base + '?o=whatsapp' : '(link das clientes)');
+}
+function show(v) {
+  ui.view = v;
+  $$('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  $$('.view').forEach(s => s.hidden = s.id !== 'view-' + v);
+  render();
+}
+const TITLES = { painel: 'Painel', dia: 'Agenda do dia', semana: 'Semana', clientes: 'Clientes', funil: 'Funil de clientes', campanhas: 'Campanhas', servicos: 'Serviços', ajustes: 'Ajustes' };
+function render() {
+  if (!S) return;
+  atualizaBadge();
+  if (ui.view === 'painel') renderPainel();
+  if (ui.view === 'funil') renderFunil();
+  if (ui.view === 'campanhas') renderCampanhas();
+  if (ui.view === 'dia') renderDia();
+  if (ui.view === 'semana') renderSemana();
+  if (ui.view === 'clientes') renderClientes();
+  if (ui.view === 'servicos') renderServicos();
+  if (ui.view === 'ajustes') renderAjustes();
+  $('#page-title').textContent = TITLES[ui.view];
+}
+
+function abrirGaveta(a, o) {
+  o = o || {};
+  const f = $('#form-ag');
+  f.reset();
+  ui.editId = a ? a.id : null;
+  const ativos = S.servicos.filter(s => s.ativo !== 'nao');
+  $('#f-svc').innerHTML = ativos.map(s => '<option value="' + esc(s.id) + '">' + esc(s.nome) + ' · ' + s.min + ' min</option>').join('') + '<option value="__block">— Bloquear horário (indisponível) —</option>';
+  if (a) {
+    f.elements.id.value = a.id; f.elements.clienteId.value = a.clienteId || ''; f.elements.pagamento.value = a.pagamento || ''; f.elements.nome.value = a.nome; f.elements.telefone.value = fmtFone(a.telefone);
+    if (!ativos.some(s => s.id === a.servicoId) && a.servicoId !== '__block') $('#f-svc').insertAdjacentHTML('afterbegin', '<option value="' + esc(a.servicoId) + '">' + esc(a.servico) + ' (removido)</option>');
+    f.elements.servicoId.value = a.servicoId; f.elements.data.value = a.data; f.elements.inicio.value = a.inicio;
+    f.elements.preco.value = a.preco; f.elements.status.value = a.status === 'bloqueado' ? 'agendado' : a.status; f.elements.obs.value = a.obs || ''; f.elements.duracao.value = a.duracao;
+  } else {
+    f.elements.data.value = o.data || ui.day || S.hoje;
+    if (o.cliente) { f.elements.nome.value = o.cliente.nome; f.elements.telefone.value = fmtFone(o.cliente.telefone); f.elements.clienteId.value = o.cliente.id; }
+    if (o.inicio) f.elements.inicio.value = o.inicio;
+    if (o.bloqueio) f.elements.servicoId.value = '__block';
+    else { const s0 = ativos[0]; if (s0) { f.elements.servicoId.value = s0.id; f.elements.preco.value = s0.preco; } }
+  }
+  $('#cl-names').innerHTML = S.clientes.map(c => '<option value="' + esc(c.nome) + '">' + esc(fmtFone(c.telefone)) + '</option>').join('');
+  dicaCliente();
+  ajustaModo();
+  $('#dr-kicker').textContent = a ? 'Editar' : 'Novo';
+  $('#dr-title').textContent = a ? a.nome : 'Agendamento';
+  const info = $('#dr-info');
+  if (a && a.status !== 'bloqueado') { info.hidden = false; info.textContent = (a.origem === 'site' ? 'Agendado pela cliente no site' : 'Cadastrado por você') + ' · Código ' + a.codigo; } else info.hidden = true;
+  $('#dr-ficha').hidden = !(a && a.clienteId && xOf(a.clienteId));
+  $('#dr-cancel').hidden = !a || a.status === 'cancelado' || a.status === 'bloqueado';
+  const wa = a && a.status !== 'bloqueado' && a.telefone ? waLink(a.telefone, msgCliente(a)) : '';
+  $('#dr-wa').hidden = !wa; if (wa) $('#dr-wa').href = wa;
+  $('#f-erro').hidden = true;
+  $('#drawer').hidden = false;
+  setTimeout(() => f.elements.nome.focus(), 60);
+}
+function ajustaModo() {
+  const f = $('#form-ag'), b = f.elements.servicoId.value === '__block';
+  $$('[data-noblock]').forEach(e => e.hidden = b);
+  if (!b) dicaCliente();
+  $$('[data-onlyblock]').forEach(e => e.hidden = !b);
+  $('#lb-nome').textContent = b ? 'Motivo (opcional)' : 'Cliente';
+  f.elements.nome.required = !b;
+  $('#dr-save').textContent = b ? 'Bloquear' : 'Salvar';
+}
+function fecharGaveta() { $('#drawer').hidden = true; }
+function dicaCliente() {
+  const f = $('#form-ag'), id = f.elements.clienteId.value, x = id ? xOf(id) : null, h = $('#dr-cli-hint');
+  h.hidden = !x;
+  if (x) h.textContent = ESTAGIO_NOME[x.estagio] + ' · ' + x.feitos + ' atendimento' + (x.feitos === 1 ? '' : 's') + ' · ' + brl(x.gasto) + (x.disp ? ' · brinde disponível' : '');
+  $('#lb-orig').hidden = !!id || f.elements.servicoId.value === '__block';
+}
+function abrirPay(id) { const a = S.agenda.find(x => x.id === id); if (!a) return; $('#pay').dataset.id = id; $('#pay-t').textContent = a.nome + ' · ' + brl(a.preco); $('#pay').hidden = false; }
+async function mudarStatus(id, status, pag) {
+  const a = S.agenda.find(x => x.id === id); if (!a) return;
+  const prev = a.status;
+  let r; try { r = await api('status', { id: id, status: status, pagamento: pag || '' }); } catch (e) { return; }
+  if (r.erro) return toast(r.erro);
+  upsert(r.ag); reindex(); render();
+  if (status === 'concluido') toast('Atendimento concluído' + (pag ? ' · ' + PAG_NOME[pag] : '') + '.');
+  if (status === 'cancelado') toast('Horário cancelado.', async () => { const u = await api('status', { id: id, status: prev }); if (u.erro) toast(u.erro); else { upsert(u.ag); reindex(); render(); } });
+}
+
+async function registraCampanha(cid, camp) {
+  const c = camps().filter(x => x.id === camp)[0], x = xOf(cid);
+  try {
+    const r = await api('interacao', { clienteId: cid, tipo: 'campanha', texto: 'Mensagem enviada: ' + (c ? c.titulo : camp) });
+    if (r.ok) { S.interacoes.push(r.interacao); sincCliente(r.cliente); reindex(); setTimeout(render, 500); }
+  } catch (e) { /* segue */ }
+}
+async function addInteracao() {
+  const id = fichaId, t = $('#int-txt'), er = $('#fch-erro');
+  const r = await api('interacao', { clienteId: id, tipo: $('#int-tipo').value, texto: t.value });
+  if (r.erro) { er.textContent = r.erro; er.hidden = false; return; }
+  er.hidden = true; t.value = ''; S.interacoes.push(r.interacao); sincCliente(r.cliente); reindex(); fichaTl(id); render();
+}
+async function resgatarBrinde(id) {
+  const r = await api('brinde', { clienteId: id });
+  if (r.erro) return toast(r.erro);
+  S.interacoes.push(r.interacao); sincCliente(r.cliente); reindex();
+  $('#fch-fid').innerHTML = fichaFid(xOf(id)); fichaTl(id); render(); toast('Brinde registrado.');
+}
+async function arquivar(id, btn) {
+  if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = 'Toque de novo para arquivar'; return; }
+  const r = await api('cliente', { acao: 'arquivar', id: id });
+  if (r.erro) return toast(r.erro);
+  S.clientes = S.clientes.filter(c => c.id !== id); reindex(); fecharFicha(); render(); toast('Cliente arquivada. Os atendimentos continuam na agenda.');
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'form-ficha') return;
+  e.preventDefault();
+  const f = e.target, er = $('#fch-erro'), c = fichaId ? (xOf(fichaId) || {}).c : null;
+  const p = { id: fichaId || '', nome: f.elements.nome.value, telefone: f.elements.telefone.value, nascimento: f.elements.nascimento.value, instagram: f.elements.instagram.value, origem: f.elements.origem.value, tags: f.elements.tags.value, notas: f.elements.notas.value, lead: c ? c.lead : true };
+  const r = await api('cliente', p);
+  if (r.erro) { er.textContent = r.erro; er.hidden = false; return; }
+  sincCliente(r.cliente);
+  S.agenda.forEach(a => { if (a.clienteId === r.cliente.id) { a.nome = r.cliente.nome; a.telefone = r.cliente.telefone; } });
+  reindex(); fecharFicha(); render(); toast('Ficha salva.');
+});
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.closest('#booking') || t.closest('#login')) return;
+  if (t.closest('[data-novo]')) return abrirGaveta(null, { data: ui.view === 'dia' || ui.view === 'semana' ? ui.day : S.hoje });
+  if (t.closest('[data-bloquear]')) return abrirGaveta(null, { data: ui.day, bloqueio: true });
+  if (t.closest('[data-fechar]')) return fecharGaveta();
+  if (t.closest('[data-copiar]')) { const b = S.cfg.urlCliente || ''; return b ? copiar(b, 'Link copiado.') : toast('Abra o link das clientes uma vez para ele aparecer aqui.'); }
+  if (t.closest('[data-copiar-adm]')) return copiar($('#link-adm').value, 'Link copiado.');
+  const ct = t.closest('[data-copiar-txt]'); if (ct) return copiar($('#' + ct.dataset.copiarTxt).value, 'Texto copiado.');
+  const q = t.closest('[data-q]'); if (q) return q.dataset.q === 'confirmar' ? mudarStatus(q.dataset.id, 'confirmado') : abrirPay(q.dataset.id);
+  const pg = t.closest('[data-pay]'); if (pg) { const id = $('#pay').dataset.id; $('#pay').hidden = true; return mudarStatus(id, 'concluido', pg.dataset.pay); }
+  if (t.closest('[data-pay-x]')) { $('#pay').hidden = true; return; }
+  const cm = t.closest('[data-camp]');
+  if (cm) { registraCampanha(cm.dataset.cid, cm.dataset.camp); return; }
+  if (t.closest('a[href]')) return;
+  if (t.closest('[data-fechar-ficha]')) return fecharFicha();
+  if (t.closest('[data-nova-cliente]')) return abrirFicha(null);
+  const fl = t.closest('[data-filtro]'); if (fl) { ui.cf = fl.dataset.filtro; return renderClientes(); }
+  const op0 = t.closest('[data-open]');
+  if (op0 && !$('#cdrawer').hidden) { const a0 = S.agenda.find(x => x.id === op0.dataset.open); if (a0) { fecharFicha(); abrirGaveta(a0); } return; }
+  if (t.closest('[data-add-int]')) return addInteracao();
+  const bd = t.closest('[data-brinde]'); if (bd) return resgatarBrinde(bd.dataset.brinde);
+  const ar = t.closest('[data-arquivar]'); if (ar) return arquivar(ar.dataset.arquivar, ar);
+  const ag0 = t.closest('[data-agendar-cli]'); if (ag0) { const x = xOf(ag0.dataset.agendarCli); fecharFicha(); abrirGaveta(null, { data: S.hoje, cliente: x && x.c }); return; }
+  if (t.id === 'dr-ficha') { const id = $('#form-ag').elements.clienteId.value; fecharGaveta(); return abrirFicha(id); }
+  const fc = t.closest('[data-ficha]'); if (fc) return abrirFicha(fc.dataset.ficha);
+  const og = t.closest('[data-copiar-orig]'); if (og) return copiar(og.dataset.copiarOrig, 'Link copiado.');
+  const v = t.closest('[data-view]'); if (v) return show(v.dataset.view);
+  if (t.closest('[data-today]')) { ui.day = S.hoje; return render(); }
+  const st = t.closest('[data-step]'); if (st) { ui.day = addDays(ui.day, Number(st.dataset.step)); return render(); }
+  const gt = t.closest('[data-goto]'); if (gt) { ui.day = gt.dataset.goto; if (ui.view === 'semana') show('dia'); else render(); return; }
+  const op = t.closest('[data-open]'); if (op) { const a = S.agenda.find(x => x.id === op.dataset.open); if (a) abrirGaveta(a); return; }
+  const del = t.closest('[data-svc-del]');
+  if (del) { const r = await api('servico', { acao: 'remover', id: del.dataset.svcDel }); if (r.erro) return toast(r.erro); S.servicos = r.servicos; return render(); }
+  const ed = t.closest('[data-svc-edit]');
+  if (ed) { const s = S.servicos.find(x => x.id === ed.dataset.svcEdit), f = $('#form-svc'); f.elements.id.value = s.id; f.elements.nome.value = s.nome; f.elements.min.value = s.min; f.elements.preco.value = s.preco; $('#svc-btn').textContent = 'Salvar'; f.elements.nome.focus(); return; }
+  if (t.id === 'dr-cancel') { const id = ui.editId; fecharGaveta(); return mudarStatus(id, 'cancelado'); }
+  const tl = t.closest('#tl-body');
+  if (tl) {
+    const y = e.clientY - tl.getBoundingClientRect().top;
+    let m = S.cfg.ini * 60 + Math.floor(y / HPX * 60);
+    m = Math.floor(m / S.cfg.passo) * S.cfg.passo;
+    return abrirGaveta(null, { data: ui.day, inicio: fromMin(m) });
+  }
+  if (t.matches('.scrim')) { if (t.id === 'cdrawer') fecharFicha(); else if (t.id === 'pay') t.hidden = true; else fecharGaveta(); }
+});
+$('#q').addEventListener('input', e => { ui.q = e.target.value; if (!S) return; if (ui.view === 'clientes') renderClientes(); else if (ui.view === 'funil') renderFunil(); else if (ui.view === 'dia') renderTimeline(); });
+$('#cl-ordem').addEventListener('change', e => { ui.ordem = e.target.value; renderClientes(); });
+$('#form-ag').elements.nome.addEventListener('input', e => {
+  const f = $('#form-ag'), v = e.target.value.trim().toLowerCase();
+  const m = S.clientes.filter(c => c.nome.toLowerCase() === v);
+  if (m.length === 1) { f.elements.clienteId.value = m[0].id; if (!f.elements.telefone.value) f.elements.telefone.value = fmtFone(m[0].telefone); } else f.elements.clienteId.value = '';
+  dicaCliente();
+});
+$('#form-ag').elements.telefone.addEventListener('input', e => {
+  const f = $('#form-ag'), d = e.target.value.replace(/\D/g, '');
+  if (d.length >= 10) { const m = S.clientes.filter(c => c.telefone === d)[0]; if (m) { f.elements.clienteId.value = m.id; if (!f.elements.nome.value) f.elements.nome.value = m.nome; dicaCliente(); } }
+});
+$('#f-svc').addEventListener('change', e => {
+  ajustaModo();
+  const s = S.servicos.find(x => x.id === e.target.value);
+  if (s && !$('#form-ag').elements.id.value) $('#form-ag').elements.preco.value = s.preco;
+});
+$('#login-retry').addEventListener('click', () => entrar());
+$('#form-ag').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, erro = $('#f-erro'), btn = $('#dr-save');
+  const p = { id: f.elements.id.value, nome: f.elements.nome.value, telefone: f.elements.telefone.value, servicoId: f.elements.servicoId.value, data: f.elements.data.value, inicio: f.elements.inicio.value, preco: f.elements.preco.value, status: f.elements.status.value, obs: f.elements.obs.value, duracao: f.elements.duracao.value, clienteId: f.elements.clienteId.value, pagamento: f.elements.pagamento.value, origemCliente: f.elements.origemCliente.value };
+  btn.disabled = true;
+  let r; try { r = await api('salvar', p); } catch (er) { btn.disabled = false; return; }
+  btn.disabled = false;
+  if (r.erro) { erro.textContent = r.erro; erro.hidden = false; return; }
+  upsert(r.ag); if (r.cliente) sincCliente(r.cliente); reindex(); fecharGaveta(); ui.day = r.ag.data; render();
+});
+$('#form-svc').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, er = $('#svc-erro');
+  const r = await api('servico', { id: f.elements.id.value, nome: f.elements.nome.value, min: f.elements.min.value, preco: f.elements.preco.value });
+  if (r.erro) { er.textContent = r.erro; er.hidden = false; return; }
+  er.hidden = true; S.servicos = r.servicos; f.reset(); f.elements.id.value = ''; f.elements.min.value = '60'; f.elements.preco.value = '0'; $('#svc-btn').textContent = 'Adicionar'; render();
+});
+$('#form-cfg').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, er = $('#cfg-erro');
+  const p = { nomeEstudio: f.elements.nomeEstudio.value, whatsapp: f.elements.whatsapp.value, endereco: f.elements.endereco.value, instagram: f.elements.instagram.value, urlCliente: f.elements.urlCliente.value, ini: f.elements.ini.value, fim: f.elements.fim.value, passo: f.elements.passo.value, dias: Array.prototype.map.call($$('#dias-box input:checked'), i => Number(i.value)), antecedenciaMin: f.elements.antecedenciaMin.value, maxDias: f.elements.maxDias.value, cancelarMin: Number(f.elements.cancelarH.value || 0) * 60, metaMensal: f.elements.metaMensal.value, fidelidadeCada: f.elements.fidelidadeCada.value, fidelidadeBrinde: f.elements.fidelidadeBrinde.value };
+  const r = await api('config', p);
+  if (r.erro) { er.textContent = r.erro; er.hidden = false; return; }
+  er.hidden = true; S.cfg = r.cfg; reindex(); marca(S.cfg.nomeEstudio); toast('Ajustes salvos.'); render();
+});
+document.addEventListener('keydown', e => {
+  if (!S) return;
+  if (e.key === 'Escape') { if (!$('#pay').hidden) { $('#pay').hidden = true; return; } if (!$('#cdrawer').hidden) return fecharFicha(); return fecharGaveta(); }
+  const typing = /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '');
+  if (!typing && e.key === 'n' && $('#drawer').hidden && !document.body.classList.contains('entrando')) abrirGaveta(null, { data: ui.day });
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizar(); });
+
+/* ---- início ---- */
+if (MODO === 'admin') {
+  entrar();
+} else {
+  iniciarCliente();
+}
+</script>
+
+</body></html>
