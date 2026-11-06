@@ -1711,6 +1711,7 @@ window.__DEMO = true;
   Object.assign(window, makeMocks(state));
   window.__reiniciar = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
   window.__demoSeed = function () {
+    CONFIG_INICIAL.whatsapp = '11 98888-0000'; /* número fictício só para a demonstração; a guarda de produção não roda aqui */
     configurar();
     admin('config', { nomeEstudio: 'Tiele Studio', whatsapp: '11 91234-5678', endereco: 'Rua das Flores, 120 - Centro', instagram: '@tielenails', ini: 9, fim: 19, passo: 30, dias: [1, 2, 3, 4, 5, 6], antecedenciaMin: 60, maxDias: 45, cancelarMin: 240, metaMensal: 6000, fidelidadeCada: 5, fidelidadeBrinde: '1 esmaltação em gel de brinde' });
     var p = function (n) { return String(n).padStart(2, '0'); };
